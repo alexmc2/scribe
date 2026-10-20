@@ -16,7 +16,9 @@
   padding: 0 1.25rem;
 }
 
-.brand-mark { color: var(--text); }
+.brand-mark {
+  color: var(--text);
+}
 
 .brand-name {
   font-size: 1rem;
@@ -48,8 +50,14 @@
   border-radius: 8px;
 }
 
-.search input::placeholder { color: var(--text-faint); }
-.search input:focus { outline: none; border-color: var(--text-faint); box-shadow: 0 0 0 3px var(--hover); }
+.search input::placeholder {
+  color: var(--text-faint);
+}
+.search input:focus {
+  outline: none;
+  border-color: var(--text-faint);
+  box-shadow: 0 0 0 3px var(--hover);
+}
 
 .meetings {
   flex: 1;
@@ -65,7 +73,9 @@
   color: var(--text-faint);
 }
 
-.day:first-child { margin-top: 0.5rem; }
+.day:first-child {
+  margin-top: 0.5rem;
+}
 
 .meeting {
   display: block;
@@ -78,8 +88,12 @@
   cursor: pointer;
 }
 
-.meeting:hover { background: var(--hover); }
-.meeting[aria-current="true"] { background: var(--selected); }
+.meeting:hover {
+  background: var(--hover);
+}
+.meeting[aria-current='true'] {
+  background: var(--selected);
+}
 
 .meeting-title {
   display: block;
@@ -89,7 +103,9 @@
   white-space: nowrap;
 }
 
-.meeting-title.untitled { color: var(--text-muted); }
+.meeting-title.untitled {
+  color: var(--text-muted);
+}
 
 .meeting-meta {
   display: flex;
@@ -138,8 +154,13 @@
   cursor: pointer;
 }
 
-.folder-button:hover { background: var(--hover); color: var(--text); }
-.folder-button svg { flex: none; }
+.folder-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.folder-button svg {
+  flex: none;
+}
 
 .theme {
   display: flex;
@@ -161,8 +182,13 @@
   cursor: pointer;
 }
 
-.theme button:hover { color: var(--text); }
-.theme button[aria-checked="true"] { background: var(--selected); color: var(--text); }
+.theme button:hover {
+  color: var(--text);
+}
+.theme button[aria-checked='true'] {
+  background: var(--selected);
+  color: var(--text);
+}
 
 @media (max-width: 760px) {
   .sidebar {
@@ -175,6 +201,10 @@
     box-shadow: var(--pop-shadow);
   }
 
-  .sidebar.open { transform: none; }
-  .sidebar-toggle { display: inline-grid; }
+  .sidebar.open {
+    transform: none;
+  }
+  .sidebar-toggle {
+    display: inline-grid;
+  }
 }

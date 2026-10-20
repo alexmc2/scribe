@@ -1,7 +1,7 @@
 // Everything the page knows, in one place. Modules read and update this and
 // then call the render functions for the parts of the page that changed.
 
-import type { Block, MeetingSummary, Session, Snapshot } from "./types.js";
+import type { Block, MeetingSummary, Session, Snapshot } from './types.js';
 
 export interface Editing {
   id: number; // block id
@@ -14,7 +14,7 @@ export const store = {
   engine: null as Snapshot | null, // the recorder's state, from the server
   live: null as Session | null, // the current meeting: recording, paused, or just stopped
   shown: null as Session | null, // the meeting on screen: the live one or a past one
-  preview: "",
+  preview: '',
   meetings: [] as MeetingSummary[],
   editing: null as Editing | null, // the paragraph being edited
   deferred: new Map<number, Block>(), // updates to a paragraph that arrived while it was being edited
@@ -24,7 +24,7 @@ export const store = {
 
 export function recordingOrPaused(): boolean {
   const state = store.engine?.state;
-  return state === "recording" || state === "paused";
+  return state === 'recording' || state === 'paused';
 }
 
 export function showingLive(): boolean {

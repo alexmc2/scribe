@@ -110,13 +110,13 @@ scribe --no-web                       terminal only
 
 ## Where things are kept
 
-| What | Where |
-| --- | --- |
-| Transcripts, one `.txt` per meeting | `~/Documents/Transcripts` |
-| Scribe's copy of each meeting (for history and search) | `~/Documents/Transcripts/.scribe` |
-| Settings | `~/.config/scribe/settings.json` |
-| Log | `~/.local/state/scribe/scribe.log` |
-| Speech model | `~/.cache/huggingface` |
+| What                                                   | Where                              |
+| ------------------------------------------------------ | ---------------------------------- |
+| Transcripts, one `.txt` per meeting                    | `~/Documents/Transcripts`          |
+| Scribe's copy of each meeting (for history and search) | `~/Documents/Transcripts/.scribe`  |
+| Settings                                               | `~/.config/scribe/settings.json`   |
+| Log                                                    | `~/.local/state/scribe/scribe.log` |
+| Speech model                                           | `~/.cache/huggingface`             |
 
 A transcript file is rewritten every few seconds while there's new text, and
 when you pause, stop, rename or quit. Saving replaces the file in one step, so
