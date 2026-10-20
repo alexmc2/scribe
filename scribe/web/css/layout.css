@@ -1,0 +1,38 @@
+/* The page grid: sidebar | transcript | details panel. Breakpoints:
+   1181px+ panel is a collapsible column, below that a drawer; 760px and below
+   the sidebar becomes a drawer too (see layout.ts, which matches these). */
+
+.app {
+  display: grid;
+  grid-template-columns: 16.5rem minmax(0, 1fr) 21rem;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+.main {
+  display: grid;
+  /* The top bar floats over the transcript, which scrolls underneath it. */
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "stack";
+  min-width: 0;
+}
+
+.chrome, .scroller { grid-area: stack; }
+.chrome { align-self: start; position: relative; z-index: 5; }
+
+/* The panel's column slides shut rather than vanishing (see panel.css). */
+@media (min-width: 1181px) {
+  .app { overflow: hidden; transition: grid-template-columns 0.36s cubic-bezier(0.45, 0, 0.2, 1); }
+  :root[data-panel="collapsed"] .app { grid-template-columns: 16.5rem minmax(0, 1fr) 0rem; }
+}
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 16.5rem minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  :root { --gutter: 2.5rem; --gap: 0.9rem; }
+
+  .app { grid-template-columns: minmax(0, 1fr); }
+}

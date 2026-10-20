@@ -1,0 +1,180 @@
+/* The sidebar: brand, search, meetings grouped by day, folder and theme. */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-subtle);
+  border-right: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 3.5rem;
+  padding: 0 1.25rem;
+}
+
+.brand-mark { color: var(--text); }
+
+.brand-name {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.search {
+  position: relative;
+  display: block;
+  padding: 0.25rem 0.75rem 0.5rem;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.4rem;
+  top: calc(50% - 0.125rem);
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.search input {
+  width: 100%;
+  height: 2.125rem;
+  padding: 0 0.75rem 0 2.1rem;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+
+.search input::placeholder { color: var(--text-faint); }
+.search input:focus { outline: none; border-color: var(--text-faint); box-shadow: 0 0 0 3px var(--hover); }
+
+.meetings {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 0.25rem 0.75rem 1rem;
+}
+
+.day {
+  margin: 1.1rem 0.6rem 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.day:first-child { margin-top: 0.5rem; }
+
+.meeting {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.meeting:hover { background: var(--hover); }
+.meeting[aria-current="true"] { background: var(--selected); }
+
+.meeting-title {
+  display: block;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meeting-title.untitled { color: var(--text-muted); }
+
+.meeting-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.meeting-live {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.meetings-empty {
+  margin: 0.75rem 0.6rem;
+  color: var(--text-faint);
+}
+
+.sidebar-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.folder-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 0;
+  height: 2rem;
+  padding: 0 0.5rem;
+  margin-left: -0.5rem;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.folder-button:hover { background: var(--hover); color: var(--text); }
+.folder-button svg { flex: none; }
+
+.theme {
+  display: flex;
+  padding: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+
+.theme button {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.theme button:hover { color: var(--text); }
+.theme button[aria-checked="true"] { background: var(--selected); color: var(--text); }
+
+@media (max-width: 760px) {
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(17rem, 85vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease-out;
+    box-shadow: var(--pop-shadow);
+  }
+
+  .sidebar.open { transform: none; }
+  .sidebar-toggle { display: inline-grid; }
+}

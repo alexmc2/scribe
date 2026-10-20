@@ -1,0 +1,10 @@
+# Tool settings, shared by editors and the command line. Scribe's dependencies
+# are in requirements.txt (install.sh uses it); the interface is in frontend/.
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ty.environment]
+python = ".venv"
+python-version = "3.10" # the oldest Python Scribe supports

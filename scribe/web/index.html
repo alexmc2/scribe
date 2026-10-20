@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scribe</title>
+  <link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+  <script>
+    // Apply the saved theme before the page paints, so it never flashes.
+    try {
+      const theme = localStorage.getItem("scribe-theme");
+      if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      if (localStorage.getItem("scribe-panel") === "collapsed") document.documentElement.dataset.panel = "collapsed";
+    } catch {}
+  </script>
+  <!-- Order matters: later sheets build on earlier ones. -->
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/sidebar.css">
+  <link rel="stylesheet" href="/static/css/topbar.css">
+  <link rel="stylesheet" href="/static/css/transcript.css">
+  <link rel="stylesheet" href="/static/css/panel.css">
+  <link rel="stylesheet" href="/static/css/picker.css">
+  <link rel="stylesheet" href="/static/css/toast.css">
+  <script type="module" src="/static/dist/main.js"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Meetings">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 8v4M6.5 5v10M10 2.5v15M13.5 6v8M17 8.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="brand-name">Scribe</span>
+      </div>
+      <label class="search">
+        <span class="visually-hidden">Search meetings</span>
+        <svg class="search-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13.2 13.2L17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input id="search" type="search" placeholder="Search meetings" autocomplete="off">
+      </label>
+      <nav class="meetings" id="meetings" aria-label="Past meetings"></nav>
+      <div class="sidebar-foot">
+        <button class="folder-button" id="folderButton" type="button" title="Open the folder where transcripts are saved">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M2.5 5.5a1 1 0 0 1 1-1h4l1.5 2h7.5a1 1 0 0 1 1 1v7.5a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <span>Transcripts folder</span>
+        </button>
+        <div class="theme" role="radiogroup" aria-label="Theme">
+          <button type="button" role="radio" data-theme-choice="system" aria-checked="true" title="Match system">
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 17h6M10 13.5V17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span class="visually-hidden">Match system</span>
+          </button>
+          <button type="button" role="radio" data-theme-choice="light" aria-checked="false" title="Light">
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="3.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span class="visually-hidden">Light</span>
+          </button>
+          <button type="button" role="radio" data-theme-choice="dark" aria-checked="false" title="Dark">
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M16 12.2A6.5 6.5 0 0 1 7.8 4a6.5 6.5 0 1 0 8.2 8.2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span class="visually-hidden">Dark</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main" id="main">
+      <div class="chrome" id="chrome">
+        <header class="topbar">
+          <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Meetings">
+            <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 3.5v13" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span class="visually-hidden">Meetings</span>
+          </button>
+          <div class="status" id="status" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-label" id="statusLabel">Starting</span>
+            <span class="status-time" id="statusTime"></span>
+          </div>
+          <div class="listening" id="listening" hidden></div>
+          <div class="controls" id="controls">
+            <button class="button" id="backButton" type="button" hidden>Back to live meeting</button>
+            <button class="button" id="newButton" type="button" hidden>New meeting</button>
+            <button class="button" id="stopButton" type="button" hidden>Stop</button>
+            <button class="button primary" id="primaryButton" type="button" hidden></button>
+            <button class="icon-button panel-toggle" id="panelToggle" type="button" aria-controls="panel" aria-expanded="true" title="Hide details">
+              <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12.5 3.5v13" stroke="currentColor" stroke-width="1.5"/></svg>
+              <span class="visually-hidden">Details and settings</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="banner" id="banner" hidden></div>
+      </div>
+
+      <section class="scroller" id="scroller" aria-label="Transcript">
+        <div class="sheet" id="sheet">
+          <div class="doc-head">
+            <label class="title-field">
+              <span class="visually-hidden">Meeting title</span>
+              <input id="title" class="title" type="text" placeholder="Untitled meeting" maxlength="120" autocomplete="off" spellcheck="true">
+            </label>
+            <p class="meta" id="meta"></p>
+          </div>
+          <div class="rows" id="rows"></div>
+          <div class="empty" id="empty" hidden>
+            <p class="empty-text" id="emptyText"></p>
+            <button class="button primary" id="emptyButton" type="button" hidden>Start recording</button>
+          </div>
+          <div class="row live" id="liveRow" hidden>
+            <span class="stamp"><span class="live-dot" aria-hidden="true"></span></span>
+            <p class="text preview" id="preview" aria-live="off"></p>
+          </div>
+        </div>
+        <button class="jump" id="jumpButton" type="button" hidden>Jump to live text</button>
+      </section>
+    </main>
+
+    <aside class="panel" id="panel" aria-label="Details and settings">
+      <div class="panel-head">
+        <span>Details</span>
+        <button class="icon-button panel-close" id="panelClose" type="button" aria-controls="panel" title="Hide details">
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M8 6l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="visually-hidden">Hide details</span>
+        </button>
+      </div>
+      <section class="panel-section">
+        <h2 class="panel-heading">Recording from</h2>
+        <span class="visually-hidden" id="micLabel">Microphone</span>
+        <div class="picker" id="micPicker" data-role="microphone" data-labelled-by="micLabel"></div>
+        <span class="visually-hidden" id="computerLabel">Computer audio</span>
+        <div class="picker" id="computerPicker" data-role="computer" data-labelled-by="computerLabel"></div>
+        <p class="panel-hint">Turn on computer audio for online calls, so the other people are transcribed too.</p>
+      </section>
+
+      <form class="panel-section" id="vocabForm">
+        <h2 class="panel-heading"><label for="vocabText">Names and terms</label></h2>
+        <textarea id="vocabText" rows="3" placeholder="Priya, Okonkwo, OKRs, Kubernetes"></textarea>
+        <div class="panel-row">
+          <p class="panel-hint">Helps spell names and jargon. Separate with commas.</p>
+          <button class="button small" id="vocabSave" type="submit" disabled>Save</button>
+        </div>
+      </form>
+
+      <section class="panel-section" id="fileSection" hidden>
+        <h2 class="panel-heading">Transcript</h2>
+        <p class="file-path" id="filePath"></p>
+        <div class="file-actions">
+          <button class="button" type="button" data-export="reveal">Show in folder</button>
+          <button class="button" type="button" data-export="copy">Copy text</button>
+          <a class="button" data-export="txt" href="#">Download .txt</a>
+          <a class="button" data-export="md" href="#">Download .md</a>
+        </div>
+        <div class="danger" id="deleteArea">
+          <button class="button danger-button" id="deleteButton" type="button">Delete meeting</button>
+          <div class="confirm" id="deleteConfirm" hidden>
+            <p>Move this meeting and its transcript file to the Trash?</p>
+            <div class="confirm-actions">
+              <button class="button" id="deleteCancel" type="button">Cancel</button>
+              <button class="button danger-solid" id="deleteYes" type="button">Move to Trash</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="engine" id="engine"></p>
+    </aside>
+  </div>
+  <div class="scrim" id="scrim" hidden></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

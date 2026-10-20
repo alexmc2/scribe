@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.py[cod]
+frontend/node_modules/
+# Built from frontend/src by install.sh (npm run build); not source.
+scribe/web/dist/

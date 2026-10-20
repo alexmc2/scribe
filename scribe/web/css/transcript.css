@@ -1,0 +1,168 @@
+/* The transcript: title and details, a row per paragraph (time, text),
+   editing, the live preview line and the jump-to-live button. */
+
+.scroller {
+  position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable; /* a scrollbar appearing mustn't shift the text */
+  /* Keep things scrolled into view (e.g. a paragraph being edited) clear of the top bar. */
+  scroll-padding-top: calc(var(--chrome-height, 3.5rem) + 1rem);
+}
+
+.sheet {
+  /* --chrome-height is the floating top bar's height, measured in layout.ts. */
+  padding: calc(var(--chrome-height, 3.5rem) + 3rem) 3.5rem 8rem 2.5rem;
+}
+
+.doc-head {
+  margin: 0 0 2rem calc(var(--gutter) + var(--gap));
+}
+
+.title-field { display: block; }
+
+.title {
+  width: 100%;
+  max-width: 48rem;
+  margin-left: -0.4rem;
+  padding: 0.15rem 0.4rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: 2.125rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.title:hover { background: var(--hover); }
+.title:focus { outline: none; background: var(--hover); }
+.title::placeholder { color: var(--text-faint); }
+
+.meta {
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta .save-failed { color: var(--red); font-weight: 500; }
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+  column-gap: var(--gap);
+  padding: 0.55rem 0;
+}
+
+.stamp {
+  padding-top: 0.38rem;
+  text-align: right;
+  font-size: 0.8125rem;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.text {
+  margin: 0;
+  max-width: 78ch;
+  font-size: 1.1875rem;
+  line-height: 1.7;
+  overflow-wrap: break-word;
+  border-radius: 6px;
+  cursor: text;
+}
+
+.text:hover { background: var(--hover); box-shadow: 0 0 0 0.35rem var(--hover); }
+
+.text:has(.words:focus) {
+  background: var(--bg);
+  box-shadow: 0 0 0 0.35rem var(--bg), 0 0 0 calc(0.35rem + 1.5px) var(--focus);
+}
+
+.words { outline: none; caret-color: var(--text); }
+
+.speaker {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0 0.4rem;
+  border-radius: 5px;
+  background: var(--selected);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35rem;
+  vertical-align: 0.1rem;
+}
+
+.row.flash .text { animation: settle 1s ease-out; }
+
+.live .text { color: var(--text-faint); cursor: default; }
+.live .text:hover { background: none; box-shadow: none; }
+
+.preview::after {
+  content: "";
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: var(--text);
+  animation: blink 1.1s steps(1) infinite;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.5rem;
+  border-radius: 50%;
+  background: var(--red);
+  animation: ring 1.8s ease-out infinite;
+}
+
+.empty {
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+  column-gap: var(--gap);
+}
+
+.empty > * { grid-column: 2; justify-self: start; }
+
+.empty-text {
+  margin: 0 0 1rem;
+  font-size: 1.1875rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.jump {
+  position: sticky;
+  bottom: 1rem;
+  display: block;
+  height: 2.125rem;
+  margin: -3.5rem auto 1rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.35);
+}
+
+@media (min-width: 1181px) {
+  /* Line length never depends on whether the panel is open, so text doesn't
+     re-wrap (and jump) while it slides: 49rem = sidebar + panel + margins. */
+  .row .text, .empty .empty-text { max-width: min(78ch, calc(100vw - 49rem)); }
+}
+
+@media (max-width: 760px) {
+  .sheet { padding: calc(var(--chrome-height, 7rem) + 1.5rem) 1rem 6rem; }
+  .doc-head { margin-left: 0; }
+  .title { font-size: 1.5rem; }
+  .text, .empty-text { font-size: 1.0625rem; }
+}

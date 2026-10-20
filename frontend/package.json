@@ -1,0 +1,14 @@
+{
+  "name": "scribe-frontend",
+  "private": true,
+  "type": "module",
+  "description": "Scribe's browser interface, compiled to ../scribe/web/dist",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

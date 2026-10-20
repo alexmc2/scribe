@@ -1,0 +1,28 @@
+/* Confirmations and errors at the bottom of the window (toast.ts). */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.65rem 1rem 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-weight: 500;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.4);
+  transform: translateX(-50%);
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast svg { flex: none; }
+.toast span { overflow-wrap: anywhere; }
+.toast.error { background: var(--red); color: #fff; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, 0.5rem); }
+}
