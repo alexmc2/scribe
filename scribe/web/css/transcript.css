@@ -19,7 +19,9 @@
   margin: 0 0 2rem calc(var(--gutter) + var(--gap));
 }
 
-.title-field { display: block; }
+.title-field {
+  display: block;
+}
 
 .title {
   width: 100%;
@@ -35,9 +37,16 @@
   letter-spacing: -0.03em;
 }
 
-.title:hover { background: var(--hover); }
-.title:focus { outline: none; background: var(--hover); }
-.title::placeholder { color: var(--text-faint); }
+.title:hover {
+  background: var(--hover);
+}
+.title:focus {
+  outline: none;
+  background: var(--hover);
+}
+.title::placeholder {
+  color: var(--text-faint);
+}
 
 .meta {
   margin: 0.4rem 0 0;
@@ -46,7 +55,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.meta .save-failed { color: var(--red); font-weight: 500; }
+.meta .save-failed {
+  color: var(--red);
+  font-weight: 500;
+}
 
 .row {
   position: relative;
@@ -75,14 +87,22 @@
   cursor: text;
 }
 
-.text:hover { background: var(--hover); box-shadow: 0 0 0 0.35rem var(--hover); }
+.text:hover {
+  background: var(--hover);
+  box-shadow: 0 0 0 0.35rem var(--hover);
+}
 
 .text:has(.words:focus) {
   background: var(--bg);
-  box-shadow: 0 0 0 0.35rem var(--bg), 0 0 0 calc(0.35rem + 1.5px) var(--focus);
+  box-shadow:
+    0 0 0 0.35rem var(--bg),
+    0 0 0 calc(0.35rem + 1.5px) var(--focus);
 }
 
-.words { outline: none; caret-color: var(--text); }
+.words {
+  outline: none;
+  caret-color: var(--text);
+}
 
 .speaker {
   display: inline-block;
@@ -97,13 +117,21 @@
   vertical-align: 0.1rem;
 }
 
-.row.flash .text { animation: settle 1s ease-out; }
+.row.flash .text {
+  animation: settle 1s ease-out;
+}
 
-.live .text { color: var(--text-faint); cursor: default; }
-.live .text:hover { background: none; box-shadow: none; }
+.live .text {
+  color: var(--text-faint);
+  cursor: default;
+}
+.live .text:hover {
+  background: none;
+  box-shadow: none;
+}
 
 .preview::after {
-  content: "";
+  content: '';
   display: inline-block;
   width: 1.5px;
   height: 1.1em;
@@ -129,7 +157,10 @@
   column-gap: var(--gap);
 }
 
-.empty > * { grid-column: 2; justify-self: start; }
+.empty > * {
+  grid-column: 2;
+  justify-self: start;
+}
 
 .empty-text {
   margin: 0 0 1rem;
@@ -157,12 +188,24 @@
 @media (min-width: 1181px) {
   /* Line length never depends on whether the panel is open, so text doesn't
      re-wrap (and jump) while it slides: 49rem = sidebar + panel + margins. */
-  .row .text, .empty .empty-text { max-width: min(78ch, calc(100vw - 49rem)); }
+  .row .text,
+  .empty .empty-text {
+    max-width: min(78ch, calc(100vw - 49rem));
+  }
 }
 
 @media (max-width: 760px) {
-  .sheet { padding: calc(var(--chrome-height, 7rem) + 1.5rem) 1rem 6rem; }
-  .doc-head { margin-left: 0; }
-  .title { font-size: 1.5rem; }
-  .text, .empty-text { font-size: 1.0625rem; }
+  .sheet {
+    padding: calc(var(--chrome-height, 7rem) + 1.5rem) 1rem 6rem;
+  }
+  .doc-head {
+    margin-left: 0;
+  }
+  .title {
+    font-size: 1.5rem;
+  }
+  .text,
+  .empty-text {
+    font-size: 1.0625rem;
+  }
 }

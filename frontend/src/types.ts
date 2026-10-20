@@ -1,7 +1,12 @@
 // The shapes of the data the Python server sends (see scribe/server.py and
 // scribe/engine.py). Field names follow the server's snake_case.
 
-export type RecorderState = "loading" | "ready" | "recording" | "paused" | "error";
+export type RecorderState =
+  | 'loading'
+  | 'ready'
+  | 'recording'
+  | 'paused'
+  | 'error';
 
 export interface Block {
   id: number;
@@ -44,14 +49,20 @@ export interface Settings {
   vocabulary: string;
 }
 
-export type IconName = "microphone" | "speaker" | "display" | "headset" | "off" | "default";
+export type IconName =
+  | 'microphone'
+  | 'speaker'
+  | 'display'
+  | 'headset'
+  | 'off'
+  | 'default';
 
 /** An input being recorded right now, shown as a chip in the top bar. */
 export interface ActiveInput {
   label: string;
   detail: string;
   icon: IconName;
-  role: "microphone" | "computer";
+  role: 'microphone' | 'computer';
 }
 
 /** One choice in the Microphone or Computer audio picker. */
@@ -87,7 +98,16 @@ export interface Snapshot {
 /** Live events from /api/events, by name. */
 export interface ServerEvents {
   snapshot: Snapshot;
-  state: Pick<Snapshot, "state" | "message" | "input_error" | "inputs" | "model" | "device" | "settings">;
+  state: Pick<
+    Snapshot,
+    | 'state'
+    | 'message'
+    | 'input_error'
+    | 'inputs'
+    | 'model'
+    | 'device'
+    | 'settings'
+  >;
   session: { session: Session };
   block: { session_id: string; block: Block };
   preview: { session_id: string; text: string };

@@ -19,10 +19,20 @@
   animation: toast-in 0.18s ease-out;
 }
 
-.toast svg { flex: none; }
-.toast span { overflow-wrap: anywhere; }
-.toast.error { background: var(--red); color: #fff; }
+.toast svg {
+  flex: none;
+}
+.toast span {
+  overflow-wrap: anywhere;
+}
+.toast.error {
+  background: var(--red);
+  color: #fff;
+}
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translate(-50%, 0.5rem); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.5rem);
+  }
 }
