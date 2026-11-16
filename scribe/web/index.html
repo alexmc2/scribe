@@ -11,6 +11,7 @@
       const theme = localStorage.getItem("scribe-theme");
       if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
       if (localStorage.getItem("scribe-panel") === "collapsed") document.documentElement.dataset.panel = "collapsed";
+      if (localStorage.getItem("scribe-sidebar") === "collapsed") document.documentElement.dataset.sidebar = "collapsed";
     } catch {}
   </script>
   <!-- Order matters: later sheets build on earlier ones. -->
@@ -30,6 +31,10 @@
       <div class="brand">
         <svg class="brand-mark" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 8v4M6.5 5v10M10 2.5v15M13.5 6v8M17 8.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span class="brand-name">Scribe</span>
+        <button class="icon-button sidebar-close" id="sidebarClose" type="button" aria-controls="sidebar" title="Hide meetings">
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M12 6l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="visually-hidden">Hide meetings</span>
+        </button>
       </div>
       <label class="search">
         <span class="visually-hidden">Search meetings</span>
@@ -62,7 +67,7 @@
     <main class="main" id="main">
       <div class="chrome" id="chrome">
         <header class="topbar">
-          <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Meetings">
+          <button class="icon-button sidebar-toggle" id="sidebarToggle" type="button" aria-controls="sidebar" aria-expanded="true" title="Hide meetings">
             <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7.5 3.5v13" stroke="currentColor" stroke-width="1.5"/></svg>
             <span class="visually-hidden">Meetings</span>
           </button>
@@ -73,6 +78,7 @@
           </div>
           <div class="listening" id="listening" hidden></div>
           <div class="controls" id="controls">
+            <button class="button" id="copyAllButton" type="button" title="Copy the whole transcript" hidden>Copy all</button>
             <button class="button" id="backButton" type="button" hidden>Back to live meeting</button>
             <button class="button" id="newButton" type="button" hidden>New meeting</button>
             <button class="button" id="stopButton" type="button" hidden>Stop</button>
@@ -97,6 +103,7 @@
             <p class="meta" id="meta"></p>
           </div>
           <div class="rows" id="rows"></div>
+          <datalist id="speakerNames"></datalist>
           <div class="empty" id="empty" hidden>
             <p class="empty-text" id="emptyText"></p>
             <button class="button primary" id="emptyButton" type="button" hidden>Start recording</button>
@@ -136,6 +143,14 @@
         </div>
       </form>
 
+      <section class="panel-section">
+        <label class="check">
+          <input type="checkbox" id="tidyToggle" checked>
+          <span>Leave out ums and uhs</span>
+        </label>
+        <p class="panel-hint">Also drops stutters and needless pauses (…) from new speech. Meetings already saved aren't changed.</p>
+      </section>
+
       <section class="panel-section" id="fileSection" hidden>
         <h2 class="panel-heading">Transcript</h2>
         <p class="file-path" id="filePath"></p>
@@ -145,6 +160,7 @@
           <a class="button" data-export="txt" href="#">Download .txt</a>
           <a class="button" data-export="md" href="#">Download .md</a>
         </div>
+        <button class="button archive-button" id="archiveButton" type="button">Archive meeting</button>
         <div class="danger" id="deleteArea">
           <button class="button danger-button" id="deleteButton" type="button">Delete meeting</button>
           <div class="confirm" id="deleteConfirm" hidden>

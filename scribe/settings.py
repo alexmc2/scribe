@@ -1,4 +1,5 @@
-"""Choices that persist between runs: which inputs to record, and the vocabulary."""
+"""Choices that persist between runs: which inputs to record, the vocabulary,
+and whether to tidy up speech."""
 
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ DEFAULTS = {
     "microphone": "default",
     "computer_audio": "off",
     "vocabulary": "",
+    "tidy_speech": "on",  # "on" leaves out ums, stutters and pauses (see tidy.py)
 }
 
 

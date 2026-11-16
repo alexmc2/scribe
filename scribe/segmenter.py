@@ -19,6 +19,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from .audio import FRAME_SAMPLES, SAMPLE_RATE
+from .tidy import names_in, tidy_speech
 from .transcriber import Segment
 
 TranscribeFn = Callable[..., list[Segment]]
@@ -66,6 +67,7 @@ class Segmenter:
         options: SegmenterOptions | None = None,
         speakers: list[str] | None = None,
         vocabulary: str = "",
+        tidy: bool = False,
     ):
         self.transcribe = transcribe
         self.detect_speech = detect_speech
@@ -73,6 +75,9 @@ class Segmenter:
         # One label per input, used to say who spoke when there are several inputs.
         self.speakers = speakers
         self.vocabulary = vocabulary
+        # Leave out ums, stutters and needless pauses (see tidy.py). This also
+        # keeps them out of the context Whisper is shown, so it writes fewer.
+        self.tidy = tidy
         self.audio = np.zeros(0, dtype=np.float32)
         self.energy = np.zeros((0, len(speakers or [None])), dtype=np.float32)
         self.offset = 0  # stream position of self.audio[0], in samples
@@ -123,7 +128,7 @@ class Segmenter:
         if allow_preview and now - self._last_preview >= opts.preview_interval_s:
             self._last_preview = now
             segments = self.transcribe(self.audio, prompt=self._prompt(), final=False)
-            return [], self._set_preview(_join(segments))
+            return [], self._set_preview(self._tidied(_join(segments)))
         return [], None
 
     def flush(self) -> list[Commit]:
@@ -170,7 +175,11 @@ class Segmenter:
         _, i = max(gaps)
         return _floor_frame((speech[i][1] + speech[i + 1][0]) // 2)
 
+    def _tidied(self, text: str) -> str:
+        return tidy_speech(text, names_in(self.vocabulary)) if self.tidy else text
+
     def _make_commit(self, text: str, start: int, end: int) -> Commit | None:
+        text = self._tidied(text)
         if not text:
             return None
         self.context = f"{self.context} {text}"[-400:]

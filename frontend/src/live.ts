@@ -1,13 +1,24 @@
 // Live updates from the server over server-sent events (/api/events).
 
-import { renderBanner, renderMeta } from "./header.js";
-import { inputsLoaded, loadInputs, setLevels } from "./inputs.js";
-import { forgetMeeting, loadMeetings, loadMeetingsSoon, renderMeetings } from "./meetings.js";
-import { renderFile } from "./panel.js";
-import { renderAll } from "./render.js";
-import { showingLive, store, upsert } from "./state.js";
-import { renderEmpty, renderJump, renderPreview, renderTranscript, showBlock } from "./transcript.js";
-import type { ServerEvents, Snapshot } from "./types.js";
+import { renderBanner, renderMeta } from './header.js';
+import { inputsLoaded, loadInputs, setLevels } from './inputs.js';
+import {
+  forgetMeeting,
+  loadMeetings,
+  loadMeetingsSoon,
+  renderMeetings,
+} from './meetings.js';
+import { renderFile } from './panel.js';
+import { renderAll } from './render.js';
+import { showingLive, store, upsert } from './state.js';
+import {
+  renderEmpty,
+  renderJump,
+  renderPreview,
+  renderTranscript,
+  showBlock,
+} from './transcript.js';
+import type { ServerEvents, Snapshot } from './types.js';
 
 /** Take in the recorder's whole state, following the live meeting if it's on screen. */
 export function applySnapshot(snapshot: Snapshot): void {
@@ -15,7 +26,7 @@ export function applySnapshot(snapshot: Snapshot): void {
   const previousLiveId = store.live?.id;
   store.engine = snapshot;
   store.live = snapshot.session;
-  store.preview = snapshot.preview || "";
+  store.preview = snapshot.preview || '';
   if (followLive) {
     store.shown = store.live;
     renderTranscript();
@@ -37,9 +48,9 @@ const handlers: Handlers = {
   },
   state(data) {
     if (!store.engine) return;
-    const wasRecording = store.engine.state === "recording";
+    const wasRecording = store.engine.state === 'recording';
     Object.assign(store.engine, data);
-    if (wasRecording && data.state !== "recording") store.preview = "";
+    if (wasRecording && data.state !== 'recording') store.preview = '';
     renderAll();
     renderJump();
     renderMeetings();
@@ -90,16 +101,21 @@ const handlers: Handlers = {
 };
 
 export function connect(): void {
-  const events = new EventSource("/api/events");
-  for (const [kind, handle] of Object.entries(handlers) as [keyof ServerEvents, (data: unknown) => void][]) {
-    events.addEventListener(kind, (event) => handle(JSON.parse((event as MessageEvent<string>).data)));
+  const events = new EventSource('/api/events');
+  for (const [kind, handle] of Object.entries(handlers) as [
+    keyof ServerEvents,
+    (data: unknown) => void,
+  ][]) {
+    events.addEventListener(kind, (event) =>
+      handle(JSON.parse((event as MessageEvent<string>).data)),
+    );
   }
   // EventSource reconnects by itself; the server then sends a fresh snapshot.
-  events.addEventListener("open", () => {
+  events.addEventListener('open', () => {
     store.connected = true;
     renderBanner();
   });
-  events.addEventListener("error", () => {
+  events.addEventListener('error', () => {
     store.connected = false;
     renderBanner();
   });

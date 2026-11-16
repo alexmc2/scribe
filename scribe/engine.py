@@ -107,6 +107,12 @@ class Engine:
         if self.segmenter is not None:
             self.segmenter.vocabulary = text
 
+    def set_tidy(self, on: bool) -> None:
+        self.settings.update(tidy_speech="on" if on else "off")
+        if self.segmenter is not None:
+            self.segmenter.tidy = on
+        self._publish_state()
+
     def delete(self, session: Session) -> None:
         """Move a meeting to the Trash. The meeting being recorded has to be stopped first."""
         if session is self.session and self.state in (RECORDING, PAUSED):
@@ -302,6 +308,7 @@ class Engine:
             SegmenterOptions(preview_interval_s=0.6 if self.transcriber.on_gpu else 2.0),
             speakers=speakers,
             vocabulary=self.settings.get("vocabulary"),
+            tidy=self.settings.get("tidy_speech") == "on",
         )
         self.segmenter.context = context
         sources = list_sources()
