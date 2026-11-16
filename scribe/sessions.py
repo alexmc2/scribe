@@ -29,6 +29,8 @@ FORMAT_VERSION = 1
 PARAGRAPH_GAP_S = 2.5
 PARAGRAPH_MAX_S = 60.0
 
+SPEAKER_MAX_CHARS = 60
+
 
 def now_local() -> datetime:
     return datetime.now().astimezone()
@@ -90,6 +92,10 @@ class Session:
     model: str = ""
     inputs: list[str] = field(default_factory=list)
     txt_name: str = ""
+    # Names the user gave to a voice for the whole meeting, e.g. {"Others": "Priya"},
+    # so speech still to come is labelled with the name too.
+    speaker_names: dict[str, str | None] = field(default_factory=dict)
+    archived: bool = False  # kept, but left out of the list of meetings
     dirty: bool = False
     lock: threading.RLock = field(default_factory=threading.RLock, repr=False, compare=False)
 
@@ -104,6 +110,7 @@ class Session:
     def add_text(self, start: float, end: float, text: str, speaker: str | None) -> Block:
         """Add newly transcribed speech, continuing the last paragraph when it flows on."""
         with self.lock:
+            speaker = self.speaker_names.get(speaker, speaker) if speaker else speaker
             last = self.blocks[-1] if self.blocks else None
             if (
                 last is not None
@@ -138,6 +145,28 @@ class Session:
             self.dirty = True
             return block
 
+    def set_speaker(self, block_id: int, name: str | None) -> Block:
+        """Label one paragraph with who said it; an empty name removes the label."""
+        with self.lock:
+            block = self.get_block(block_id)
+            block.speaker = _clean_speaker(name)
+            self.dirty = True
+            return block
+
+    def rename_speaker(self, old: str, new: str | None) -> list[Block]:
+        """Relabel every paragraph by ``old``, and the speech still to come from that voice."""
+        new = _clean_speaker(new)
+        with self.lock:
+            changed = [block for block in self.blocks if block.speaker == old]
+            for block in changed:
+                block.speaker = new
+            for voice, name in self.speaker_names.items():
+                if name == old:
+                    self.speaker_names[voice] = new
+            self.speaker_names[old] = new
+            self.dirty = True
+            return changed
+
     def get_block(self, block_id: int) -> Block:
         for block in self.blocks:
             if block.id == block_id:
@@ -147,6 +176,11 @@ class Session:
     def set_title(self, title: str) -> None:
         with self.lock:
             self.title = " ".join(title.split())[:120]
+            self.dirty = True
+
+    def set_archived(self, archived: bool) -> None:
+        with self.lock:
+            self.archived = archived
             self.dirty = True
 
     def has_text(self) -> bool:
@@ -169,6 +203,8 @@ class Session:
                 "model": self.model,
                 "inputs": list(self.inputs),
                 "txt_name": self.txt_name,
+                "speaker_names": dict(self.speaker_names),
+                "archived": self.archived,
                 "blocks": [block.to_dict() for block in self.blocks],
             }
 
@@ -183,8 +219,14 @@ class Session:
             model=data.get("model", ""),
             inputs=list(data.get("inputs", [])),
             txt_name=data.get("txt_name", ""),
+            speaker_names=dict(data.get("speaker_names") or {}),
+            archived=bool(data.get("archived", False)),
             blocks=[Block.from_dict(b) for b in data.get("blocks", [])],
         )
+
+
+def _clean_speaker(name: str | None) -> str | None:
+    return " ".join(str(name or "").split())[:SPEAKER_MAX_CHARS] or None
 
 
 def _speaker_prefix(block: Block) -> str:
@@ -356,8 +398,11 @@ class SessionStore:
         except FileNotFoundError:
             raise KeyError(session_id) from None
 
-    def list_meetings(self, query: str = "") -> list[dict]:
-        """Summaries of every saved meeting, newest first, optionally filtered by text."""
+    def list_meetings(self, query: str = "", archived: bool = False) -> list[dict]:
+        """Summaries of the saved meetings, newest first, optionally filtered by text.
+
+        Lists the meetings in use, or with ``archived`` the ones put away instead.
+        """
         needle = query.strip().lower()
         results = []
         with self._lock:
@@ -369,7 +414,7 @@ class SessionStore:
                 if entry is None:
                     continue
                 summary, haystack = entry
-                if needle and needle not in haystack:
+                if summary["archived"] != archived or (needle and needle not in haystack):
                     continue
                 results.append(summary)
         # Newest first by when the meeting started (ISO timestamps sort as text).
@@ -405,6 +450,7 @@ def summarize(session: Session) -> dict:
             "duration": round(session.elapsed() if session.ended_at else last_end),
             "words": session.word_count(),
             "txt_name": session.txt_name,
+            "archived": session.archived,
             # Untitled meetings are listed by their first words, so they can be told apart.
             "preview": " ".join(session.plain_text().split()[:12]),
         }

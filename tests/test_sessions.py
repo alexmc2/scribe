@@ -93,6 +93,22 @@ class SessionStoreTest(unittest.TestCase):
             self.store.save(session)
         self.assertEqual([m["title"] for m in self.store.list_meetings()], ["Later", "Earlier"])
 
+    def test_archived_meetings_are_kept_but_listed_apart(self):
+        kept, put_away = self.store.create(title="Kept"), self.store.create(title="Put away")
+        for session in (kept, put_away):
+            session.add_text(0, 1, "Quarterly numbers.", None)
+            self.store.save(session)
+        put_away.set_archived(True)
+        self.store.save(put_away)
+        self.assertEqual([m["title"] for m in self.store.list_meetings()], ["Kept"])
+        self.assertEqual([m["title"] for m in self.store.list_meetings(archived=True)], ["Put away"])
+        self.assertEqual([m["title"] for m in self.store.list_meetings("quarterly", archived=True)], ["Put away"])
+        self.assertTrue(self.store.load(put_away.id).archived)
+        self.assertEqual(len(self.txt_files()), 2)  # nothing was deleted
+        put_away.set_archived(False)
+        self.store.save(put_away)
+        self.assertEqual(len(self.store.list_meetings()), 2)
+
     def test_unsafe_ids_are_rejected(self):
         with self.assertRaises(KeyError):
             self.store.load("../../etc/passwd")
@@ -135,6 +151,46 @@ class ParagraphTest(unittest.TestCase):
         # New speech after an edit starts a new paragraph rather than changing the edited one.
         s.add_text(3.2, 4.0, "Later.", None)
         self.assertEqual(len(s.blocks), 2)
+
+    def test_naming_one_paragraphs_speaker(self):
+        s = self.session
+        block = s.add_text(0.0, 2.0, "Hi.", "Others")
+        s.set_speaker(block.id, "  Priya   Okonkwo ")
+        self.assertEqual(block.speaker, "Priya Okonkwo")
+        self.assertEqual(block.text, "Hi.")
+        s.set_speaker(block.id, "   ")
+        self.assertIsNone(block.speaker)
+        # Naming one paragraph doesn't relabel speech still to come.
+        self.assertEqual(s.add_text(2.2, 3.0, "More.", "Others").speaker, "Others")
+
+    def test_renaming_a_speaker_everywhere_names_later_speech_too(self):
+        s = self.session
+        s.add_text(0.0, 2.0, "Hi.", "Others")
+        s.add_text(2.2, 3.0, "Hello.", "You")
+        s.add_text(3.2, 4.0, "How are you?", "Others")
+        changed = s.rename_speaker("Others", "Priya")
+        self.assertEqual([b.text for b in changed], ["Hi.", "How are you?"])
+        self.assertEqual([b.speaker for b in s.blocks], ["Priya", "You", "Priya"])
+        # Their next words continue the paragraph, under the new name.
+        s.add_text(4.2, 5.0, "Good.", "Others")
+        self.assertEqual(len(s.blocks), 3)
+        self.assertEqual(s.blocks[-1].text, "How are you? Good.")
+        # Renaming the new name again follows through to later speech.
+        s.rename_speaker("Priya", "Priya O.")
+        s.add_text(20.0, 21.0, "Bye.", "Others")
+        self.assertEqual(s.blocks[-1].speaker, "Priya O.")
+        self.assertEqual(s.add_text(30.0, 31.0, "Bye!", "You").speaker, "You")
+
+    def test_speaker_names_are_saved(self):
+        store = SessionStore(Path(self._tmp.name))
+        s = store.create()
+        s.add_text(0.0, 2.0, "Hi.", "Others")
+        s.rename_speaker("Others", "Priya")
+        store.save(s)
+        loaded = store.load(s.id)
+        self.assertEqual(loaded.blocks[0].speaker, "Priya")
+        self.assertEqual(loaded.speaker_names, {"Others": "Priya"})
+        self.assertIn("Priya: Hi.", (store.folder / s.txt_name).read_text())
 
 
 if __name__ == "__main__":

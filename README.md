@@ -66,7 +66,10 @@ Open **Details** (the panel button, top right) and set:
   Zoom, Teams or Meet call. Set it to "System default" for calls; leave it
   "Off" for meetings in a room.
 
-With both on, each paragraph is labelled **You** or **Others**. Choices are
+With both on, each paragraph is labelled **You** or **Others**. Click a label
+to put in someone's name instead; Scribe then offers to change every paragraph
+with that label, and later speech from the same input gets the name too. Point
+at a paragraph without a label for a button that adds one. Choices are
 remembered.
 
 ### Past meetings
@@ -76,14 +79,24 @@ remembered.
   <img alt="A finished meeting in Scribe: the sidebar lists meetings by day, the transcript labels who spoke, and the Details panel shows the input settings, names and terms, and the transcript file with export and delete" src="docs/screenshots/meeting-light.webp">
 </picture>
 
-- The sidebar lists every meeting by day and searches their text.
+- The sidebar lists every meeting by day and searches their text. Point at a
+  meeting to **archive** it: it's kept, but moves to **Archived** at the end of
+  the list. The arrow at the top of the sidebar hides it; the button at the
+  top left brings it back.
 - Click any paragraph to correct it. Enter saves, Escape cancels, and clearing
   a paragraph removes it.
+- Point at a paragraph to copy it with the button beside it. **Copy all** at
+  the top copies the whole transcript as plain paragraphs. Names are added
+  only when more than one person spoke.
 - **Pause / Resume** keeps the same meeting and file. **Stop** finishes it;
   **New meeting** finishes it and starts another.
+- **Leave out ums and uhs** (in Details, on by default) also drops stutters
+  ("It's... It's okay") and needless pauses ("..."). It's plain rules, so it
+  only ever removes words; the names in **Names and terms** keep their
+  capitals. Turn it off for word-for-word transcripts.
 - In **Details**: **Names and terms** helps spell names, acronyms and jargon.
   **Transcript** shows where the file is, and lets you copy it, download it as
-  text or Markdown, or delete the meeting (it goes to the Trash).
+  text or Markdown, archive the meeting, or delete it (it goes to the Trash).
 - The switch at the bottom of the sidebar picks a light or dark look, or
   follows your system.
 

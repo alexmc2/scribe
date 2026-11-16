@@ -90,13 +90,17 @@ ROUTES: list[tuple[str, re.Pattern, str]] = [
         ("GET", r"/api/inputs", "inputs"),
         ("POST", r"/api/inputs", "set_inputs"),
         ("POST", r"/api/vocabulary", "set_vocabulary"),
+        ("POST", r"/api/tidy", "set_tidy"),
         ("POST", r"/api/recording/(?P<action>start|pause|resume|stop)", "recording"),
         ("GET", r"/api/meetings", "meetings"),
         ("GET", r"/api/meetings/(?P<id>[\w-]+)", "meeting"),
         ("GET", r"/api/meetings/(?P<id>[\w-]+)/export\.(?P<fmt>txt|md)", "export"),
         ("POST", r"/api/meetings/(?P<id>[\w-]+)/title", "set_title"),
         ("POST", r"/api/meetings/(?P<id>[\w-]+)/blocks/(?P<block>\d+)", "edit_block"),
+        ("POST", r"/api/meetings/(?P<id>[\w-]+)/blocks/(?P<block>\d+)/speaker", "set_speaker"),
+        ("POST", r"/api/meetings/(?P<id>[\w-]+)/speakers", "rename_speaker"),
         ("POST", r"/api/meetings/(?P<id>[\w-]+)/reveal", "reveal"),
+        ("POST", r"/api/meetings/(?P<id>[\w-]+)/archive", "archive"),
         ("POST", r"/api/meetings/(?P<id>[\w-]+)/delete", "delete"),
         ("POST", r"/api/folder/open", "open_folder"),
     ]
@@ -254,6 +258,10 @@ class Handler(BaseHTTPRequestHandler):
         self.scribe.engine.set_vocabulary(str(self._body().get("text", "")))
         self._send_json({"ok": True})
 
+    def _set_tidy(self, query):
+        self.scribe.engine.set_tidy(bool(self._body().get("on", True)))
+        self._send_json({"ok": True})
+
     def _recording(self, action, query):
         engine = self.scribe.engine
         if action == "start":
@@ -264,15 +272,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def _meetings(self, query):
         text = query.get("q", [""])[0]
-        meetings = self.scribe.store.list_meetings(text)
+        archived = query.get("archived", [""])[0] == "1"
+        meetings = self.scribe.store.list_meetings(text, archived=archived)
         engine = self.scribe.engine
         live = engine.session
-        listed = live is not None and (live.has_text() or engine.state in (RECORDING, PAUSED))
+        listed = (
+            live is not None
+            and live.archived == archived
+            and (live.has_text() or engine.state in (RECORDING, PAUSED))
+        )
         if listed and text.lower() in f"{live.title}\n{live.plain_text()}".lower():
             # The live meeting may not be on disk yet, and its newest words may not be saved.
             meetings = [m for m in meetings if m["id"] != live.id]
             meetings.insert(0, summarize(live))
-        self._send_json({"meetings": meetings})
+        # How many are put away, for the "Archived" link under the list.
+        archived_count = len(self.scribe.store.list_meetings(archived=True))
+        self._send_json({"meetings": meetings, "archived_count": archived_count})
 
     def _meeting(self, id, query):
         self._send_json(self.scribe.engine.session_payload(self._session(id)))
@@ -301,6 +316,28 @@ class Handler(BaseHTTPRequestHandler):
         self.scribe.engine.bus.publish("block", session_id=session.id, block=edited.to_dict())
         self._send_json(edited.to_dict())
 
+    def _set_speaker(self, id, block, query):
+        """Label one paragraph with who said it; an empty name removes the label."""
+        name = self._body().get("name")
+        session = self._session(id)
+        edited = session.set_speaker(int(block), str(name) if name is not None else None)
+        self.scribe.engine.save(session)
+        self.scribe.engine.bus.publish("block", session_id=session.id, block=edited.to_dict())
+        self._send_json(edited.to_dict())
+
+    def _rename_speaker(self, id, query):
+        """Relabel every paragraph by one speaker, e.g. "Others" to "Priya"."""
+        body = self._body()
+        old, new = body.get("from"), body.get("to")
+        if not isinstance(old, str) or not old:
+            raise UserError("Say which speaker to rename.")
+        session = self._session(id)
+        changed = session.rename_speaker(old, str(new) if new is not None else None)
+        self.scribe.engine.save(session)
+        for block in changed:
+            self.scribe.engine.bus.publish("block", session_id=session.id, block=block.to_dict())
+        self._send_json({"blocks": [block.to_dict() for block in changed]})
+
     def _reveal(self, id, query):
         session = self._session(id)
         if not session.txt_name:
@@ -321,6 +358,18 @@ class Handler(BaseHTTPRequestHandler):
         except (OSError, subprocess.SubprocessError):
             subprocess.Popen(["xdg-open", str(path.parent)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self._send_json({"ok": True})
+
+    def _archive(self, id, query):
+        """Put a meeting away (or back): it's kept, but no longer in the list."""
+        archived = bool(self._body().get("archived", True))
+        session = self._session(id)
+        engine = self.scribe.engine
+        if archived and session is engine.session and engine.state in (RECORDING, PAUSED):
+            raise UserError("Stop recording before archiving this meeting.")
+        session.set_archived(archived)
+        engine.save(session)
+        engine.bus.publish("meetings_changed")
+        self._send_json(engine.session_payload(session))
 
     def _delete(self, id, query):
         self.scribe.engine.delete(self._session(id))

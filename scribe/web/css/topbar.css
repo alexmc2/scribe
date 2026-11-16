@@ -126,10 +126,12 @@
   margin-left: auto;
 }
 
-/* The details panel can be hidden on any window size. */
+/* The sidebar and the details panel can be hidden on any window size. */
+.sidebar-toggle,
 .panel-toggle {
   display: inline-grid;
 }
+.sidebar-toggle[aria-expanded='true'],
 .panel-toggle[aria-expanded='true'] {
   color: var(--text);
 }

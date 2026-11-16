@@ -1,5 +1,6 @@
 /* The transcript: title and details, a row per paragraph (time, text),
-   editing, the live preview line and the jump-to-live button. */
+   editing, speaker tags, the copy button beside each paragraph, the live
+   preview line and the jump-to-live button. */
 
 .scroller {
   position: relative;
@@ -78,6 +79,7 @@
 }
 
 .text {
+  position: relative; /* for the buttons beside it */
   margin: 0;
   max-width: 78ch;
   font-size: 1.1875rem;
@@ -104,10 +106,12 @@
   caret-color: var(--text);
 }
 
-.speaker {
+.speaker,
+.speaker-input {
   display: inline-block;
   margin-right: 0.5rem;
   padding: 0 0.4rem;
+  border: 0;
   border-radius: 5px;
   background: var(--selected);
   color: var(--text-muted);
@@ -115,6 +119,79 @@
   font-weight: 500;
   line-height: 1.35rem;
   vertical-align: 0.1rem;
+}
+
+.speaker {
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    color 0.12s;
+}
+.speaker:hover {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
+}
+
+/* Naming who spoke: the tag becomes a text box sized to the name. */
+.row.naming .speaker {
+  display: none;
+}
+.speaker-input {
+  field-sizing: content;
+  min-width: 5rem;
+  max-width: 16rem;
+  height: 1.35rem;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 0 0 1.5px var(--focus);
+  cursor: text;
+}
+.speaker-input:focus {
+  outline: none;
+}
+.speaker-input::placeholder {
+  color: var(--text-faint);
+}
+
+/* Copy (and, when no one is named, add who spoke): just right of the
+   paragraph, on hover. The padding bridges the gap so the pointer can
+   reach them without the row losing its hover. */
+.row-tools {
+  position: absolute;
+  top: 0.2rem;
+  left: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-left: 0.55rem;
+  z-index: 1; /* the second button reaches over the next paragraph */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+  user-select: none;
+}
+.row:hover .row-tools,
+.row:focus-within .row-tools {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.row-tool {
+  display: grid;
+  place-items: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.row-tool:hover,
+.row-tool.copied {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .row.flash .text {
@@ -207,5 +284,16 @@
   .text,
   .empty-text {
     font-size: 1.0625rem;
+  }
+  /* No room to the right: float the buttons over the paragraph's corner. */
+  .row-tools {
+    top: -1.1rem;
+    right: -0.35rem;
+    left: auto;
+    flex-direction: row;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--bg);
+    box-shadow: var(--pop-shadow);
   }
 }

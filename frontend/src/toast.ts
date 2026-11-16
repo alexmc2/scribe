@@ -6,9 +6,30 @@ import { icon } from './icons.js';
 
 let timer = 0;
 
-export function toast(message: string, isError = false): void {
+/** A follow-up the toast offers, such as "Change all". */
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
+export function toast(
+  message: string,
+  isError = false,
+  action?: ToastAction,
+): void {
   ui.toast.innerHTML = `${icon(isError ? 'alert' : 'check', '', 16, 1.8)}<span></span>`;
   child(ui.toast, 'span').textContent = message;
+  if (action) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', () => {
+      ui.toast.hidden = true;
+      action.run();
+    });
+    ui.toast.append(button);
+  }
   ui.toast.classList.toggle('error', isError);
   // Restart the entrance animation when one toast replaces another.
   ui.toast.hidden = true;
@@ -17,7 +38,7 @@ export function toast(message: string, isError = false): void {
   clearTimeout(timer);
   timer = window.setTimeout(
     () => (ui.toast.hidden = true),
-    isError ? 6000 : 3000,
+    action ? 8000 : isError ? 6000 : 3000, // time to read the offer and take it
   );
 }
 

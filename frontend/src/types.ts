@@ -25,6 +25,7 @@ export interface Session {
   model: string;
   inputs: string[];
   txt_name: string;
+  archived: boolean; // kept, but left out of the list of meetings
   blocks: Block[];
   live: boolean;
   elapsed: number;
@@ -40,6 +41,7 @@ export interface MeetingSummary {
   duration: number;
   words: number;
   txt_name: string;
+  archived: boolean;
   preview: string; // the first words, for untitled meetings
 }
 
@@ -47,6 +49,7 @@ export interface Settings {
   microphone: string; // "default", "off", or a device name
   computer_audio: string;
   vocabulary: string;
+  tidy_speech: 'on' | 'off'; // leave out ums, stutters and pauses
 }
 
 export type IconName =

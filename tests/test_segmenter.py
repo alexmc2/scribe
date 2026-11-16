@@ -131,5 +131,26 @@ class SegmenterTest(unittest.TestCase):
         self.assertEqual([c.speaker for c in commits], ["You", "Others"])
 
 
+class TidyTest(unittest.TestCase):
+    def test_ums_are_left_out_of_commits_and_of_the_next_prompt(self):
+        prompts = []
+
+        def model(audio, prompt="", final=True, timestamps=False):
+            prompts.append(prompt)
+            return [Segment(0, len(audio) / SAMPLE_RATE, "Um... So, uh, it's... It's done.")]
+
+        segmenter = Segmenter(model, detect, SegmenterOptions(), tidy=True)
+        audio = np.concatenate([tone(1.0), silence(1.0), tone(1.0), silence(1.0)])
+        commits = run(segmenter, audio)
+        self.assertEqual([c.text for c in commits], ["So, it's done.", "So, it's done."])
+        # Whisper copies the style of its prompt, so the ums mustn't reach it.
+        self.assertNotIn("Um", prompts[-1])
+        self.assertIn("So, it's done.", prompts[-1])
+
+    def test_a_phrase_that_was_only_um_commits_nothing(self):
+        segmenter = Segmenter(lambda *a, **k: [Segment(0, 1, "Um...")], detect, SegmenterOptions(), tidy=True)
+        self.assertEqual(run(segmenter, np.concatenate([tone(1.0), silence(1.0)])), [])
+
+
 if __name__ == "__main__":
     unittest.main()

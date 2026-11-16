@@ -96,12 +96,18 @@ async function commitEdit(): Promise<void> {
 }
 
 export function initEditing(): void {
-  // A click anywhere in a paragraph's box (between lines, after the last word,
-  // on the speaker tag) puts the caret in its text, at the nearest spot.
+  // A click anywhere else in a paragraph's box (between lines, after the last
+  // word) puts the caret in its text, at the nearest spot. The speaker tag and
+  // the buttons beside the paragraph do their own thing.
   ui.rows.addEventListener('mousedown', (event) => {
     const target = event.target as Element;
     const text = target.closest('.text');
-    if (!text || target.closest('.words') || event.button !== 0) return;
+    if (
+      !text ||
+      target.closest('.words, .speaker, .speaker-input, .row-tools') ||
+      event.button !== 0
+    )
+      return;
     const words = text.querySelector<HTMLElement>('.words');
     if (!words) return;
     event.preventDefault();

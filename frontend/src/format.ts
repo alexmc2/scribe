@@ -64,13 +64,21 @@ export function wordCount(session: Session): number {
   );
 }
 
-/** The transcript as plain paragraphs, for copying. */
-export function plainText(session: Session): string {
-  return session.blocks
-    .filter((b) => b.text)
-    .map((b) => (b.speaker ? `${b.speaker}: ${b.text}` : b.text))
+/** Paragraphs as plain text for copying, separated by blank lines. Each says
+ * who spoke only when more than one person did, so dictated text pastes clean. */
+export function plainText(
+  paragraphs: { speaker: string; text: string }[],
+): string {
+  const spoken = paragraphs.filter((p) => p.text);
+  const named = new Set(spoken.map((p) => p.speaker)).size > 1;
+  return spoken
+    .map((p) => (named && p.speaker ? `${p.speaker}: ${p.text}` : p.text))
     .join('\n\n');
 }
+
+/** Text typed into the page, with runs of spaces and line breaks made single spaces. */
+export const tidy = (text: string | null): string =>
+  (text ?? '').replace(/\s+/g, ' ').trim();
 
 /** "/home/someone/Documents" as "~/Documents". */
 export const homePath = (path: string): string =>

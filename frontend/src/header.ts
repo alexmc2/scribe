@@ -84,6 +84,7 @@ export function renderMeta(): void {
         `${wordCount(session).toLocaleString()} words.`,
     );
   }
+  if (session.archived) ui.meta.append(' Archived.');
   const engine = store.engine;
   if (!showingLive() || !engine) return;
   if (engine.save_error) {

@@ -13,6 +13,13 @@ const PATHS = {
   check: '<path d="M4.5 10.5l3.5 3.5 7.5-8"/>',
   chevron: '<path d="M6 8l4 4 4-4"/>',
   alert: '<circle cx="10" cy="10" r="7"/><path d="M10 6.5v4.5M10 13.6v.1"/>',
+  copy: '<rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v7A1.5 1.5 0 0 0 4.5 13"/>',
+  archive:
+    '<rect x="2.5" y="3.5" width="15" height="4" rx="1"/><path d="M4 7.5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8M8 11h4"/>',
+  unarchive:
+    '<rect x="2.5" y="3.5" width="15" height="4" rx="1"/><path d="M4 7.5v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8M10 14.5v-4.5M7.8 12.2L10 10l2.2 2.2"/>',
+  back: '<path d="M12 5l-5 5 5 5"/>',
+  name: '<circle cx="8" cy="6.5" r="3"/><path d="M2.5 16.5a5.5 5.5 0 0 1 11 0M15.5 6.5v5M13 9h5"/>',
 } as const;
 
 export type Icon = keyof typeof PATHS;

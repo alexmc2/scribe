@@ -4,8 +4,21 @@
 import { child, ui } from './dom.js';
 import { cancelEdit } from './editing.js';
 import { offset, secondsFormat } from './format.js';
+import { icon } from './icons.js';
+import { cancelNaming } from './speakers.js';
 import { showingLive, store } from './state.js';
 import type { Block } from './types.js';
+
+function toolButton(tool: 'copy' | 'name', label: string): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'row-tool';
+  button.dataset.tool = tool;
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  button.innerHTML = icon(tool, 'icon', 16);
+  return button;
+}
 
 function blockRow(block: Block): HTMLElement {
   const row = document.createElement('div');
@@ -15,7 +28,9 @@ function blockRow(block: Block): HTMLElement {
   stamp.className = 'stamp';
   const text = document.createElement('p');
   text.className = 'text';
-  const speaker = document.createElement('span');
+  // Who spoke. Click it to put in someone's name (see speakers.ts).
+  const speaker = document.createElement('button');
+  speaker.type = 'button';
   speaker.className = 'speaker';
   // Every paragraph is always editable, so clicking, selecting and placing the
   // caret behave like any text box. Editing "starts" when it gets focus.
@@ -29,7 +44,14 @@ function blockRow(block: Block): HTMLElement {
   words.spellcheck = false;
   words.setAttribute('role', 'textbox');
   words.setAttribute('aria-label', `Paragraph at ${offset(block.start)}`);
-  text.append(speaker, words);
+  // Shown beside the paragraph on hover: copy it, and name who spoke when no one is.
+  const tools = document.createElement('span');
+  tools.className = 'row-tools';
+  tools.append(
+    toolButton('copy', 'Copy paragraph'),
+    toolButton('name', 'Add who said this'),
+  );
+  text.append(speaker, words, tools);
   row.append(stamp, text);
   fillRow(row, block);
   return row;
@@ -37,7 +59,6 @@ function blockRow(block: Block): HTMLElement {
 
 export function fillRow(row: HTMLElement, block: Block): void {
   const stamp = child<HTMLTimeElement>(row, 'time');
-  const speaker = child(row, '.speaker');
   const words = child(row, '.words');
   stamp.textContent = offset(block.start);
   if (store.shown) {
@@ -47,15 +68,26 @@ export function fillRow(row: HTMLElement, block: Block): void {
     stamp.dateTime = at.toISOString();
     stamp.title = secondsFormat.format(at);
   }
-  speaker.textContent = block.speaker ?? '';
-  speaker.hidden = !block.speaker;
+  fillSpeaker(row, block.speaker);
   words.textContent = block.text;
   row.hidden = !block.text; // a paragraph cleared by the user is gone
+}
+
+/** Show who said a paragraph, or offer to add a name when it doesn't say. */
+export function fillSpeaker(row: HTMLElement, name: string | null): void {
+  const speaker = child<HTMLButtonElement>(row, '.speaker');
+  speaker.textContent = name ?? '';
+  speaker.hidden = !name;
+  speaker.title = 'Change who said this';
+  if (name)
+    speaker.setAttribute('aria-label', `Said by ${name}. Change who said this`);
+  child(row, '[data-tool="name"]').hidden = Boolean(name);
 }
 
 /** Rebuild every row, e.g. after switching meetings. */
 export function renderTranscript(): void {
   cancelEdit();
+  cancelNaming();
   ui.rows.replaceChildren(...(store.shown?.blocks ?? []).map(blockRow));
   renderEmpty();
   renderPreview();
@@ -114,6 +146,7 @@ export function renderEmpty(): void {
   ui.emptyText.textContent = message;
   ui.empty.hidden = !message;
   ui.emptyButton.hidden = !offerStart;
+  ui.copyAllButton.hidden = !session?.blocks.some((b) => b.text);
 }
 
 /** The faint line at the end showing words still being worked out. */

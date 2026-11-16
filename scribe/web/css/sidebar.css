@@ -1,4 +1,5 @@
-/* The sidebar: brand, search, meetings grouped by day, folder and theme. */
+/* The sidebar: brand, search, meetings grouped by day (and the archived
+   ones), folder and theme. */
 
 .sidebar {
   display: flex;
@@ -24,6 +25,11 @@
   font-size: 1rem;
   font-weight: 650;
   letter-spacing: -0.02em;
+}
+
+.sidebar-close {
+  display: inline-grid;
+  margin: 0 -0.5rem 0 auto;
 }
 
 .search {
@@ -77,6 +83,13 @@
   margin-top: 0.5rem;
 }
 
+/* A meeting, with its archive button on hover. The small gap keeps the
+   hover and selected highlights from running into each other. */
+.meeting-item {
+  position: relative;
+  margin-bottom: 0.2rem;
+}
+
 .meeting {
   display: block;
   width: 100%;
@@ -88,10 +101,12 @@
   cursor: pointer;
 }
 
-.meeting:hover {
+.meeting:hover,
+.meeting-item:hover .meeting {
   background: var(--hover);
 }
-.meeting[aria-current='true'] {
+.meeting[aria-current='true'],
+.meeting-item:hover .meeting[aria-current='true'] {
   background: var(--selected);
 }
 
@@ -105,6 +120,77 @@
 
 .meeting-title.untitled {
   color: var(--text-muted);
+}
+
+.meeting-action {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+}
+.meeting-item:hover .meeting-action,
+.meeting-item:focus-within .meeting-action {
+  opacity: 1;
+}
+.meeting-action:hover {
+  background: var(--selected);
+  color: var(--text);
+}
+/* Make room so the title's ellipsis ends before the button. */
+.meeting-item:hover .meeting-title,
+.meeting-item:focus-within .meeting-title {
+  padding-right: 1.75rem;
+}
+
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.25rem 0 0.25rem;
+}
+.list-head h2 {
+  margin: 0 0.6rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+
+.list-back,
+.archived-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.875rem;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.list-back {
+  margin-left: -0.15rem;
+  padding-left: 0.35rem;
+}
+.archived-link {
+  margin-top: 0.75rem;
+}
+.list-back:hover,
+.archived-link:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .meeting-meta {
@@ -190,6 +276,26 @@
   color: var(--text);
 }
 
+/* Wider windows: the column slides shut with its contents keeping their
+   width, then it's hidden from focus and screen readers (as the panel is). */
+@media (min-width: 761px) {
+  .sidebar {
+    overflow-x: hidden;
+    transition: visibility 0s;
+  }
+  .sidebar > * {
+    width: calc(16.5rem - 1px); /* the column, less its border */
+    flex-shrink: 0;
+  }
+  :root[data-sidebar='collapsed'] .sidebar {
+    visibility: hidden;
+    border-right-color: transparent;
+    transition:
+      visibility 0s linear 0.36s,
+      border-color 0s linear 0.36s;
+  }
+}
+
 @media (max-width: 760px) {
   .sidebar {
     position: fixed;
@@ -203,8 +309,5 @@
 
   .sidebar.open {
     transform: none;
-  }
-  .sidebar-toggle {
-    display: inline-grid;
   }
 }

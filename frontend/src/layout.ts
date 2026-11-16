@@ -1,5 +1,5 @@
-// Page-level layout: the theme switch, the details panel (a collapsible column
-// on wide windows, a drawer on narrow ones), and the sidebar drawer.
+// Page-level layout: the theme switch, and the meetings sidebar and details
+// panel, each a collapsible column on wide windows and a drawer on narrow ones.
 
 import { ui } from './dom.js';
 import { pickers } from './inputs.js';
@@ -50,18 +50,49 @@ function setDrawer(
     !ui.panel.classList.contains('open');
 }
 
+/** Close the sidebar if it's a drawer over the transcript (it stays put as a column). */
 export function closeSidebar(): void {
+  if (!narrowLayout.matches) return;
   setDrawer(ui.sidebar, ui.sidebarToggle, false);
+  syncSidebarToggle();
 }
 
 function closeDrawers(): void {
   setDrawer(ui.sidebar, ui.sidebarToggle, false);
   setDrawer(ui.panel, ui.panelToggle, false);
+  syncSidebarToggle();
   syncPanelToggle();
 }
 
-// Matches the breakpoint in css/layout.css.
+// Match the breakpoints in css/layout.css.
 const wideLayout = window.matchMedia('(min-width: 1181px)');
+const narrowLayout = window.matchMedia('(max-width: 760px)');
+
+function sidebarVisible(): boolean {
+  return narrowLayout.matches
+    ? ui.sidebar.classList.contains('open')
+    : document.documentElement.dataset.sidebar !== 'collapsed';
+}
+
+function syncSidebarToggle(): void {
+  const open = sidebarVisible();
+  ui.sidebarToggle.setAttribute('aria-expanded', String(open));
+  ui.sidebarToggle.title = open ? 'Hide meetings' : 'Show meetings';
+}
+
+function setSidebar(open: boolean): void {
+  if (narrowLayout.matches) {
+    setDrawer(ui.panel, ui.panelToggle, false);
+    setDrawer(ui.sidebar, ui.sidebarToggle, open);
+    syncPanelToggle();
+  } else {
+    // Kept on <html>, like the panel's, so the first paint can use it (see index.html).
+    if (open) delete document.documentElement.dataset.sidebar;
+    else document.documentElement.dataset.sidebar = 'collapsed';
+    remember('scribe-sidebar', open ? null : 'collapsed');
+  }
+  syncSidebarToggle();
+}
 
 function panelVisible(): boolean {
   return wideLayout.matches
@@ -84,6 +115,7 @@ function setPanel(open: boolean): void {
   } else {
     setDrawer(ui.sidebar, ui.sidebarToggle, false);
     setDrawer(ui.panel, ui.panelToggle, open);
+    syncSidebarToggle();
   }
   syncPanelToggle();
 }
@@ -111,13 +143,12 @@ export function initLayout(): void {
   const saved = recall('scribe-theme');
   applyTheme(saved === 'light' || saved === 'dark' ? saved : 'system');
 
-  ui.sidebarToggle.addEventListener('click', () => {
-    setDrawer(ui.panel, ui.panelToggle, false);
-    setDrawer(
-      ui.sidebar,
-      ui.sidebarToggle,
-      !ui.sidebar.classList.contains('open'),
-    );
+  ui.sidebarToggle.addEventListener('click', () =>
+    setSidebar(!sidebarVisible()),
+  );
+  ui.sidebarClose.addEventListener('click', () => {
+    setSidebar(false);
+    ui.sidebarToggle.focus();
   });
   ui.panelToggle.addEventListener('click', () => setPanel(!panelVisible()));
   ui.panelClose.addEventListener('click', () => {
@@ -126,6 +157,8 @@ export function initLayout(): void {
   });
   ui.scrim.addEventListener('click', closeDrawers);
   wideLayout.addEventListener('change', closeDrawers);
+  narrowLayout.addEventListener('change', closeDrawers);
+  syncSidebarToggle();
   syncPanelToggle();
 
   // Clicking elsewhere closes an open picker; Escape closes the drawers.

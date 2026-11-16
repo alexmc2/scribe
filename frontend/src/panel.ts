@@ -1,16 +1,17 @@
-// The details panel: names and terms, the transcript file (export, download,
-// delete) and which model is running.
+// The details panel: names and terms, tidying up speech, the transcript file
+// (export, download, archive, delete) and which model is running.
 
 import { api } from './api.js';
+import { copyTranscript } from './copying.js';
 import { ui } from './dom.js';
-import { homePath, plainText } from './format.js';
+import { homePath } from './format.js';
 import { renderPickers, setLevels } from './inputs.js';
-import { forgetMeeting } from './meetings.js';
+import { archiveMeeting, forgetMeeting } from './meetings.js';
 import { recordingOrPaused, store } from './state.js';
 import { act, toast } from './toast.js';
 import type { Session } from './types.js';
 
-/** Model status, saved input choices and names and terms. */
+/** Model status, saved input choices, names and terms, and tidying. */
 export function renderSettings(): void {
   const engine = store.engine;
   if (!engine) return;
@@ -30,6 +31,7 @@ export function renderSettings(): void {
     ui.vocabText.value = engine.settings.vocabulary ?? '';
     ui.vocabSave.disabled = true;
   }
+  ui.tidyToggle.checked = engine.settings.tidy_speech !== 'off';
   ui.folderButton.title = `Open ${homePath(engine.folder ?? '')}`;
   if (!recordingOrPaused()) setLevels([]);
 }
@@ -48,6 +50,15 @@ export function renderFile(): void {
     ? homePath(session.path)
     : `Saved to ${homePath(store.engine?.folder ?? '')} once the first words are transcribed.`;
   const isRecording = session.id === store.live?.id && recordingOrPaused();
+  ui.archiveButton.textContent = session.archived
+    ? 'Unarchive meeting'
+    : 'Archive meeting';
+  ui.archiveButton.disabled = isRecording && !session.archived;
+  ui.archiveButton.title = ui.archiveButton.disabled
+    ? 'Stop recording before archiving this meeting.'
+    : session.archived
+      ? 'Put it back in the list of meetings.'
+      : 'Keep it, but take it out of the list of meetings.';
   ui.deleteButton.disabled = isRecording;
   ui.deleteButton.title = isRecording
     ? 'Stop recording before deleting this meeting.'
@@ -78,21 +89,6 @@ async function download(session: Session, kind: 'txt' | 'md'): Promise<void> {
   toast(`Downloaded “${name}”`);
 }
 
-async function copyText(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    // Older browsers, or no clipboard permission.
-    const area = document.createElement('textarea');
-    area.value = text;
-    document.body.append(area);
-    area.select();
-    document.execCommand('copy');
-    area.remove();
-  }
-  toast('Transcript copied.');
-}
-
 // Deleting asks once more in place, rather than in a browser dialog.
 function hideDeleteConfirm(): void {
   ui.deleteConfirm.hidden = true;
@@ -109,7 +105,7 @@ export function initPanel(): void {
     const kind = item.dataset.export;
     if (kind === 'copy') {
       event.preventDefault();
-      void copyText(plainText(session));
+      void copyTranscript();
     } else if (kind === 'reveal') {
       event.preventDefault();
       void act(null, () => api(`/api/meetings/${session.id}/reveal`, {}));
@@ -123,6 +119,14 @@ export function initPanel(): void {
     'click',
     () => void act(null, () => api('/api/folder/open', {})),
   );
+
+  ui.archiveButton.addEventListener('click', () => {
+    const session = store.shown;
+    if (session)
+      void act(ui.archiveButton, () =>
+        archiveMeeting(session.id, !session.archived),
+      );
+  });
 
   ui.deleteButton.addEventListener('click', () => {
     ui.deleteButton.hidden = true;
@@ -150,6 +154,24 @@ export function initPanel(): void {
     ui.vocabSave.disabled =
       ui.vocabText.value.trim() === (store.engine?.settings.vocabulary ?? '');
   });
+  ui.tidyToggle.addEventListener('change', () => {
+    const on = ui.tidyToggle.checked;
+    void act(ui.tidyToggle, async () => {
+      try {
+        await api('/api/tidy', { on });
+      } catch (error) {
+        ui.tidyToggle.checked = !on;
+        throw error;
+      }
+      if (store.engine) store.engine.settings.tidy_speech = on ? 'on' : 'off';
+      toast(
+        on
+          ? 'Ums and uhs will be left out.'
+          : 'Speech will be kept word for word.',
+      );
+    });
+  });
+
   ui.vocabForm.addEventListener('submit', (event) => {
     event.preventDefault();
     void act(null, async () => {

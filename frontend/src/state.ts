@@ -16,6 +16,8 @@ export const store = {
   shown: null as Session | null, // the meeting on screen: the live one or a past one
   preview: '',
   meetings: [] as MeetingSummary[],
+  showArchived: false, // the sidebar lists archived meetings instead
+  archivedCount: 0,
   editing: null as Editing | null, // the paragraph being edited
   deferred: new Map<number, Block>(), // updates to a paragraph that arrived while it was being edited
   connected: false,

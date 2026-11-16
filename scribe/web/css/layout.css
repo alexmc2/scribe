@@ -28,20 +28,36 @@
   z-index: 5;
 }
 
-/* The panel's column slides shut rather than vanishing (see panel.css). */
-@media (min-width: 1181px) {
+/* The sidebar's and panel's columns slide shut rather than vanishing (see
+   sidebar.css and panel.css). */
+@media (min-width: 761px) {
   .app {
     overflow: hidden;
     transition: grid-template-columns 0.36s cubic-bezier(0.45, 0, 0.2, 1);
   }
+}
+
+@media (min-width: 1181px) {
   :root[data-panel='collapsed'] .app {
     grid-template-columns: 16.5rem minmax(0, 1fr) 0rem;
+  }
+  :root[data-sidebar='collapsed'] .app {
+    grid-template-columns: 0rem minmax(0, 1fr) 21rem;
+  }
+  :root[data-sidebar='collapsed'][data-panel='collapsed'] .app {
+    grid-template-columns: 0rem minmax(0, 1fr) 0rem;
   }
 }
 
 @media (max-width: 1180px) {
   .app {
     grid-template-columns: 16.5rem minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1180px) {
+  :root[data-sidebar='collapsed'] .app {
+    grid-template-columns: 0rem minmax(0, 1fr);
   }
 }
 
