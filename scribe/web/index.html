@@ -126,6 +126,15 @@
         </button>
       </div>
       <section class="panel-section">
+        <h2 class="panel-heading" id="kindLabel">Show as</h2>
+        <div class="segmented" id="kindPicker" role="radiogroup" aria-labelledby="kindLabel">
+          <button type="button" role="radio" data-kind="meeting" aria-checked="true">Meeting</button>
+          <button type="button" role="radio" data-kind="notes" aria-checked="false">Notes</button>
+        </div>
+        <p class="panel-hint" id="kindHint"></p>
+      </section>
+
+      <section class="panel-section">
         <h2 class="panel-heading">Recording from</h2>
         <span class="visually-hidden" id="micLabel">Microphone</span>
         <div class="picker" id="micPicker" data-role="microphone" data-labelled-by="micLabel"></div>

@@ -91,6 +91,7 @@ ROUTES: list[tuple[str, re.Pattern, str]] = [
         ("POST", r"/api/inputs", "set_inputs"),
         ("POST", r"/api/vocabulary", "set_vocabulary"),
         ("POST", r"/api/tidy", "set_tidy"),
+        ("POST", r"/api/kind", "set_kind"),
         ("POST", r"/api/recording/(?P<action>start|pause|resume|stop)", "recording"),
         ("GET", r"/api/meetings", "meetings"),
         ("GET", r"/api/meetings/(?P<id>[\w-]+)", "meeting"),
@@ -261,6 +262,14 @@ class Handler(BaseHTTPRequestHandler):
     def _set_tidy(self, query):
         self.scribe.engine.set_tidy(bool(self._body().get("on", True)))
         self._send_json({"ok": True})
+
+    def _set_kind(self, query):
+        """Meeting or notes, for the meeting given (if any) and for new recordings."""
+        body = self._body()
+        session = self._session(str(body["id"])) if body.get("id") else None
+        engine = self.scribe.engine
+        engine.set_kind(str(body.get("kind", "")), session)
+        self._send_json({"session": engine.session_payload(session) if session else None})
 
     def _recording(self, action, query):
         engine = self.scribe.engine

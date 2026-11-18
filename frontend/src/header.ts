@@ -14,7 +14,7 @@ import {
 import { applySnapshot } from './live.js';
 import { openMeeting } from './meetings.js';
 import { renderFile } from './panel.js';
-import { recordingOrPaused, showingLive, store } from './state.js';
+import { recordingOrPaused, showingLive, shownKind, store } from './state.js';
 import { act, toast } from './toast.js';
 import type { RecorderState, Session, Snapshot } from './types.js';
 
@@ -33,7 +33,9 @@ export function renderStatus(): void {
     state === 'ready' && store.live ? 'Stopped' : STATUS_LABELS[state];
   ui.statusTime.textContent =
     store.live && recordingOrPaused() ? offset(elapsedOf(store.live)) : '';
-  const title = store.shown?.title || 'Untitled meeting';
+  const title =
+    store.shown?.title ||
+    (shownKind() === 'notes' ? 'Untitled notes' : 'Untitled meeting');
   document.title =
     state === 'recording'
       ? `● ${title} – Scribe`

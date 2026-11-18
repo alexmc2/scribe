@@ -8,6 +8,10 @@ export type RecorderState =
   | 'paused'
   | 'error';
 
+/** How a recording reads: a meeting has times and who spoke, notes are the
+ * words alone. */
+export type Kind = 'meeting' | 'notes';
+
 export interface Block {
   id: number;
   start: number; // seconds since the meeting started
@@ -26,6 +30,7 @@ export interface Session {
   inputs: string[];
   txt_name: string;
   archived: boolean; // kept, but left out of the list of meetings
+  kind: Kind;
   blocks: Block[];
   live: boolean;
   elapsed: number;
@@ -42,6 +47,7 @@ export interface MeetingSummary {
   words: number;
   txt_name: string;
   archived: boolean;
+  kind: Kind;
   preview: string; // the first words, for untitled meetings
 }
 
@@ -49,6 +55,7 @@ export interface Settings {
   microphone: string; // "default", "off", or a device name
   computer_audio: string;
   vocabulary: string;
+  kind: Kind; // what a new recording is
   tidy_speech: 'on' | 'off'; // leave out ums, stutters and pauses
 }
 

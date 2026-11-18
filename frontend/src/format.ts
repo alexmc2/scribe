@@ -1,5 +1,7 @@
 // Dates, durations and text, formatted for display.
 
+import type { Kind } from './types.js';
+
 import type { Session } from './types.js';
 
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -64,15 +66,20 @@ export function wordCount(session: Session): number {
   );
 }
 
-/** Paragraphs as plain text for copying, separated by blank lines. Each says
- * who spoke only when more than one person did, so dictated text pastes clean. */
+/** Paragraphs as plain text for copying, separated by blank lines. Notes are
+ * the words alone, so dictated text pastes clean; a meeting's paragraphs say
+ * when they were said and by whom: "[1:05] Priya: Shall we start?" */
 export function plainText(
-  paragraphs: { speaker: string; text: string }[],
+  paragraphs: { time: string; speaker: string; text: string }[],
+  kind: Kind,
 ): string {
-  const spoken = paragraphs.filter((p) => p.text);
-  const named = new Set(spoken.map((p) => p.speaker)).size > 1;
-  return spoken
-    .map((p) => (named && p.speaker ? `${p.speaker}: ${p.text}` : p.text))
+  return paragraphs
+    .filter((p) => p.text)
+    .map((p) =>
+      kind === 'notes'
+        ? p.text
+        : `[${p.time}] ${p.speaker ? `${p.speaker}: ` : ''}${p.text}`,
+    )
     .join('\n\n');
 }
 

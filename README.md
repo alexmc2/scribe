@@ -90,6 +90,11 @@ remembered.
   only when more than one person spoke.
 - **Pause / Resume** keeps the same meeting and file. **Stop** finishes it;
   **New meeting** finishes it and starts another.
+- **Meeting or Notes** (in Details, under "Show as"): a meeting shows when
+  each paragraph was said and who said it, and copies and files have them
+  too. Notes are the words alone, on screen, when copied and in the file,
+  which suits dictating text to paste elsewhere. You can switch a recording
+  at any time, and new recordings start as whichever you chose last.
 - **Leave out ums and uhs** (in Details, on by default) also drops stutters
   ("It's... It's okay") and pauses ("..."). It's plain rules, so it
   only ever removes words; the names in **Names and terms** keep their

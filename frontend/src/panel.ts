@@ -7,9 +7,42 @@ import { ui } from './dom.js';
 import { homePath } from './format.js';
 import { renderPickers, setLevels } from './inputs.js';
 import { archiveMeeting, forgetMeeting } from './meetings.js';
-import { recordingOrPaused, store } from './state.js';
+import { renderAll } from './render.js';
+import { recordingOrPaused, shownKind, store } from './state.js';
 import { act, toast } from './toast.js';
-import type { Session } from './types.js';
+import type { Kind, Session } from './types.js';
+
+const KIND_HINTS: Record<Kind, string> = {
+  meeting:
+    'Shows when each paragraph was said and who said it. Copies and files have them too.',
+  notes:
+    'Just the words, with no times or names, on screen, when copied and in the file. Good for dictating.',
+};
+
+/** The Meeting / Notes switch, and the page laid out to match. */
+function renderKind(): void {
+  const kind = shownKind();
+  ui.sheet.dataset.kind = kind;
+  for (const button of ui.kindPicker.querySelectorAll<HTMLElement>(
+    '[data-kind]',
+  )) {
+    button.setAttribute('aria-checked', String(button.dataset.kind === kind));
+  }
+  ui.kindHint.textContent = KIND_HINTS[kind];
+  ui.title.placeholder =
+    kind === 'notes' ? 'Untitled notes' : 'Untitled meeting';
+}
+
+/** Make the shown recording a meeting or notes, and new recordings the same. */
+async function setKind(kind: Kind): Promise<void> {
+  const id = store.shown?.id;
+  await api('/api/kind', id ? { kind, id } : { kind });
+  for (const session of new Set([store.shown, store.live])) {
+    if (session && session.id === id) session.kind = kind;
+  }
+  if (store.engine) store.engine.settings.kind = kind;
+  renderAll();
+}
 
 /** Model status, saved input choices, names and terms, and tidying. */
 export function renderSettings(): void {
@@ -32,6 +65,7 @@ export function renderSettings(): void {
     ui.vocabSave.disabled = true;
   }
   ui.tidyToggle.checked = engine.settings.tidy_speech !== 'off';
+  renderKind();
   ui.folderButton.title = `Open ${homePath(engine.folder ?? '')}`;
   if (!recordingOrPaused()) setLevels([]);
 }
@@ -149,6 +183,14 @@ export function initPanel(): void {
         toast('Moved to the Trash.');
       }),
   );
+
+  ui.kindPicker.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLElement>(
+      '[data-kind]',
+    );
+    const kind = button?.dataset.kind as Kind | undefined;
+    if (kind && kind !== shownKind()) void act(null, () => setKind(kind));
+  });
 
   ui.vocabText.addEventListener('input', () => {
     ui.vocabSave.disabled =

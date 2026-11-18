@@ -24,7 +24,7 @@ from .audio import (
 )
 from .events import EventBus
 from .segmenter import Commit, Segmenter, SegmenterOptions
-from .sessions import Session, SessionStore, now_local
+from .sessions import KINDS, Session, SessionStore, now_local
 from .settings import Settings
 from .transcriber import SpeechDetector, Transcriber
 
@@ -111,6 +111,17 @@ class Engine:
         self.settings.update(tidy_speech="on" if on else "off")
         if self.segmenter is not None:
             self.segmenter.tidy = on
+        self._publish_state()
+
+    def set_kind(self, kind: str, session: Session | None = None) -> None:
+        """Make ``session`` a meeting or notes, and new recordings the same."""
+        if kind not in KINDS:
+            raise UserError("Choose Meeting or Notes.")
+        self.settings.update(kind=kind)
+        if session is not None:
+            session.set_kind(kind)
+            self.save(session)
+            self.bus.publish("meetings_changed")
         self._publish_state()
 
     def delete(self, session: Session) -> None:
@@ -340,6 +351,7 @@ class Engine:
             raise UserError("Turn on the microphone or computer audio to record.")
         self.segmenter = None
         session = self.session = self.store.create(title=title, model=self.transcriber.model_name)
+        session.kind = self.settings.get("kind")
         self._begin_capture()
         self._set_state(RECORDING, "")
         self.save()

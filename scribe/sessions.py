@@ -31,6 +31,10 @@ PARAGRAPH_MAX_S = 60.0
 
 SPEAKER_MAX_CHARS = 60
 
+# How a recording reads: a meeting has times and who spoke; notes are the
+# words alone, for dictating text to paste somewhere else.
+KINDS = ("meeting", "notes")
+
 
 def now_local() -> datetime:
     return datetime.now().astimezone()
@@ -96,12 +100,13 @@ class Session:
     # so speech still to come is labelled with the name too.
     speaker_names: dict[str, str | None] = field(default_factory=dict)
     archived: bool = False  # kept, but left out of the list of meetings
+    kind: str = "meeting"  # one of KINDS
     dirty: bool = False
     lock: threading.RLock = field(default_factory=threading.RLock, repr=False, compare=False)
 
     @property
     def display_title(self) -> str:
-        return self.title or "Untitled meeting"
+        return self.title or ("Untitled notes" if self.kind == "notes" else "Untitled meeting")
 
     def elapsed(self) -> float:
         end = self.ended_at or now_local()
@@ -183,6 +188,13 @@ class Session:
             self.archived = archived
             self.dirty = True
 
+    def set_kind(self, kind: str) -> None:
+        if kind not in KINDS:
+            raise ValueError(kind)
+        with self.lock:
+            self.kind = kind
+            self.dirty = True
+
     def has_text(self) -> bool:
         return any(block.text for block in self.blocks)
 
@@ -205,6 +217,7 @@ class Session:
                 "txt_name": self.txt_name,
                 "speaker_names": dict(self.speaker_names),
                 "archived": self.archived,
+                "kind": self.kind,
                 "blocks": [block.to_dict() for block in self.blocks],
             }
 
@@ -221,6 +234,7 @@ class Session:
             txt_name=data.get("txt_name", ""),
             speaker_names=dict(data.get("speaker_names") or {}),
             archived=bool(data.get("archived", False)),
+            kind=data.get("kind") if data.get("kind") in KINDS else "meeting",
             blocks=[Block.from_dict(b) for b in data.get("blocks", [])],
         )
 
@@ -250,7 +264,10 @@ def render_text(session: Session) -> str:
         for block in session.blocks:
             if not block.text:
                 continue
-            lines.append(f"[{format_offset(block.start)}]  {_speaker_prefix(block)}{block.text}")
+            if session.kind == "notes":
+                lines.append(block.text)
+            else:
+                lines.append(f"[{format_offset(block.start)}]  {_speaker_prefix(block)}{block.text}")
             lines.append("")
         return "\n".join(lines)
 
@@ -261,8 +278,11 @@ def render_markdown(session: Session) -> str:
         for block in session.blocks:
             if not block.text:
                 continue
-            speaker = f"**{block.speaker}:** " if block.speaker else ""
-            lines.append(f"`{format_offset(block.start)}` {speaker}{block.text}")
+            if session.kind == "notes":
+                lines.append(block.text)
+            else:
+                speaker = f"**{block.speaker}:** " if block.speaker else ""
+                lines.append(f"`{format_offset(block.start)}` {speaker}{block.text}")
             lines.append("")
         return "\n".join(lines)
 
@@ -384,7 +404,7 @@ class SessionStore:
         return self.folder / new_name
 
     def _txt_name_for(self, session: Session) -> str:
-        stem = f"{session.started_at:%Y-%m-%d %H.%M} {_safe_filename(session.title) or 'Meeting'}"
+        stem = f"{session.started_at:%Y-%m-%d %H.%M} {_safe_filename(session.title) or session.kind.capitalize()}"
         candidate, n = f"{stem}.txt", 2
         # Another meeting may already own this name (same minute, same title).
         while candidate != session.txt_name and (self.folder / candidate).exists():
@@ -451,6 +471,7 @@ def summarize(session: Session) -> dict:
             "words": session.word_count(),
             "txt_name": session.txt_name,
             "archived": session.archived,
+            "kind": session.kind,
             # Untitled meetings are listed by their first words, so they can be told apart.
             "preview": " ".join(session.plain_text().split()[:12]),
         }

@@ -21,6 +21,7 @@ DEFAULTS = {
     "microphone": "default",
     "computer_audio": "off",
     "vocabulary": "",
+    "kind": "meeting",  # what a new recording is: "meeting" or "notes" (see sessions.py)
     "tidy_speech": "on",  # "on" leaves out ums, stutters and pauses (see tidy.py)
 }
 

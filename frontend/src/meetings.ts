@@ -114,13 +114,15 @@ function meetingItem(meeting: MeetingSummary): HTMLElement {
   const item = document.createElement('button');
   item.type = 'button';
   item.className = 'meeting';
-  item.title = meeting.title || meeting.preview || 'Untitled meeting';
+  const untitled =
+    meeting.kind === 'notes' ? 'Untitled notes' : 'Untitled meeting';
+  item.title = meeting.title || meeting.preview || untitled;
   item.dataset.id = meeting.id;
   item.setAttribute('aria-current', String(store.shown?.id === meeting.id));
 
   const title = document.createElement('span');
   title.className = meeting.title ? 'meeting-title' : 'meeting-title untitled';
-  title.textContent = meeting.title || meeting.preview || 'Untitled meeting';
+  title.textContent = item.title;
 
   const meta = document.createElement('span');
   meta.className = 'meeting-meta';

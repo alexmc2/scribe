@@ -1,7 +1,13 @@
 // Everything the page knows, in one place. Modules read and update this and
 // then call the render functions for the parts of the page that changed.
 
-import type { Block, MeetingSummary, Session, Snapshot } from './types.js';
+import type {
+  Block,
+  Kind,
+  MeetingSummary,
+  Session,
+  Snapshot,
+} from './types.js';
 
 export interface Editing {
   id: number; // block id
@@ -31,6 +37,12 @@ export function recordingOrPaused(): boolean {
 
 export function showingLive(): boolean {
   return Boolean(store.shown && store.live && store.shown.id === store.live.id);
+}
+
+/** Whether the page reads as a meeting or as notes: what the shown recording
+ * is, or with nothing shown, what the next recording will be. */
+export function shownKind(): Kind {
+  return store.shown?.kind ?? store.engine?.settings.kind ?? 'meeting';
 }
 
 export function blockById(id: number): Block | undefined {

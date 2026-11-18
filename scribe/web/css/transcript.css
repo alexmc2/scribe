@@ -297,3 +297,14 @@
     box-shadow: var(--pop-shadow);
   }
 }
+
+/* Notes: the words alone. The time's column stays, so the text keeps its
+   place under the title. */
+.sheet[data-kind='notes'] .rows .stamp {
+  visibility: hidden;
+}
+.sheet[data-kind='notes'] .rows .speaker,
+.sheet[data-kind='notes'] .rows .speaker-input,
+.sheet[data-kind='notes'] .rows [data-tool='name'] {
+  display: none;
+}

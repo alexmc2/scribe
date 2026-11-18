@@ -38,6 +38,7 @@ export const ui = {
   banner: byId('banner'),
 
   scroller: byId('scroller'),
+  sheet: byId('sheet'),
   title: byId<HTMLInputElement>('title'),
   meta: byId('meta'),
   rows: byId('rows'),
@@ -56,6 +57,8 @@ export const ui = {
   vocabText: byId<HTMLTextAreaElement>('vocabText'),
   vocabSave: byId<HTMLButtonElement>('vocabSave'),
   tidyToggle: byId<HTMLInputElement>('tidyToggle'),
+  kindPicker: byId('kindPicker'),
+  kindHint: byId('kindHint'),
   fileSection: byId('fileSection'),
   filePath: byId('filePath'),
   archiveButton: byId<HTMLButtonElement>('archiveButton'),

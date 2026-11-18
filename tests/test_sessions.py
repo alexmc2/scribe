@@ -109,6 +109,25 @@ class SessionStoreTest(unittest.TestCase):
         self.store.save(put_away)
         self.assertEqual(len(self.store.list_meetings()), 2)
 
+    def test_notes_are_saved_as_the_words_alone(self):
+        session = self.store.create()
+        session.add_text(5, 6, "Add an undo button.", "You")
+        session.add_text(20, 21, "Make it prominent.", "You")
+        self.store.save(session)
+        self.assertIn("[00:00:05]  You: Add an undo button.", (self.store.folder / self.txt_files()[0]).read_text())
+        session.set_kind("notes")
+        path = self.store.save(session)
+        text = path.read_text()
+        self.assertTrue(text.endswith("Add an undo button.\n\nMake it prominent.\n"))
+        self.assertNotIn("00:00:05", text)
+        self.assertNotIn("You:", text)
+        self.assertTrue(path.name.endswith("Notes.txt"))
+        self.assertEqual(len(self.txt_files()), 1)  # renamed, not duplicated
+        self.assertEqual(self.store.load(session.id).kind, "notes")
+        self.assertEqual(self.store.list_meetings()[0]["kind"], "notes")
+        with self.assertRaises(ValueError):
+            session.set_kind("diary")
+
     def test_unsafe_ids_are_rejected(self):
         with self.assertRaises(KeyError):
             self.store.load("../../etc/passwd")
