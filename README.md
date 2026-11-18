@@ -91,7 +91,7 @@ remembered.
 - **Pause / Resume** keeps the same meeting and file. **Stop** finishes it;
   **New meeting** finishes it and starts another.
 - **Leave out ums and uhs** (in Details, on by default) also drops stutters
-  ("It's... It's okay") and needless pauses ("..."). It's plain rules, so it
+  ("It's... It's okay") and pauses ("..."). It's plain rules, so it
   only ever removes words; the names in **Names and terms** keep their
   capitals. Turn it off for word-for-word transcripts.
 - In **Details**: **Names and terms** helps spell names, acronyms and jargon.

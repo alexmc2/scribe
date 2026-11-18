@@ -1,4 +1,4 @@
-"""Tidying transcribed speech: no "um" or "uh", no stutters, fewer "..." pauses.
+"""Tidying transcribed speech: no "um" or "uh", no stutters, no "..." pauses.
 
 Plain rules, no language model, so it's instant and only ever removes things:
 the words that remain are the ones Whisper heard. The cleaned text is also
@@ -46,6 +46,23 @@ _LEADS_ON = frozenset(
 
 # "I" and its contractions start a new thought after a pause more often than not.
 _I_FORMS = frozenset({"i", "i'm", "i'll", "i've", "i'd"})
+
+# Words a sentence doesn't end on, so a pause after one never becomes a full stop.
+_CARRIES_ON = _LEADS_ON | frozenset(
+    "and but or so because that if when while to of in on at for with from by as than is are was were am be".split()
+)
+
+# Whisper writes a pause as "..." after a word, before the next one, or both
+# ("another... ...application"). Any run of them counts as one pause.
+_DOTS = r"(?:\.{2,}|…)"
+_PAUSE_RUN = re.compile(rf"\s*{_DOTS}(?:\s*{_DOTS})*\s*")
+
+
+def _one_pause(match: re.Match) -> str:
+    before = match.string[: match.start()].rstrip()
+    if not before or not match.string[match.end() :].strip():
+        return " "  # a pause at the very start or end says nothing
+    return " " if before.endswith((".", "?", "!", ",", ";", ":")) else "... "
 
 
 def _split(token: str) -> tuple[str, str]:
@@ -110,26 +127,29 @@ def _drop_repeats(words: list[list[str]]) -> list[list[str]]:
 
 
 def _join_pauses(words: list[list[str]], names: frozenset[str]) -> None:
-    """Drop "..." mid-sentence where the next word clearly carries on."""
+    """Take out every "..." pause, joining the words either side of it."""
     for here, after in zip(words, words[1:]):
-        if not _ends_pause(here[1]) or len(here[1]) > 3:
+        if not _ends_pause(here[1]):
             continue
         word = after[0]
         bare = _bare(word)
-        if not word or bare in _I_FORMS:
+        here[1] = ""
+        if not word or word[0].islower():
             continue
-        if word[0].islower():
-            here[1] = ""
-            continue
-        if bare in names or (len(word) > 1 and word.isupper()):
-            continue  # a name or an acronym keeps its capitals, and its pause
-        if bare in _COMMON or _bare(here[0]) in _LEADS_ON:
-            here[1] = ""
+        if bare in _I_FORMS:
+            # Usually a new thought: "follows your finger... I'll send it".
+            if _bare(here[0]) not in _CARRIES_ON:
+                here[1] = "."
+        elif bare in names or (len(word) > 1 and word.isupper()):
+            pass  # a name or an acronym keeps its capitals
+        elif bare in _COMMON or _bare(here[0]) in _LEADS_ON:
             after[0] = word[0].lower() + word[1:]
+    if words and _ends_pause(words[-1][1]):
+        words[-1][1] = ""
 
 
-def _capitalise_sentences(words: list[list[str]]) -> None:
-    starts = [True] + [_ends_sentence(trail) for _, trail in words[:-1]]
+def _capitalise_sentences(words: list[list[str]], first: bool) -> None:
+    starts = [first] + [_ends_sentence(trail) for _, trail in words[:-1]]
     for entry, start in zip(words, starts):
         word = entry[0]
         if start and word and word[0].islower():
@@ -144,12 +164,16 @@ def names_in(vocabulary: str) -> frozenset[str]:
 def tidy_speech(text: str, names: frozenset[str] = frozenset()) -> str:
     """Remove fillers, stutters and needless pauses from transcribed speech.
 
-    ``names`` (lowercase, see :func:`names_in`) are never lowercased.
+    ``names`` (lowercase, see :func:`names_in`) are never lowercased. Text that
+    starts with a pause ("...by turning it") carries on an earlier sentence, so
+    its first word isn't capitalised.
     """
+    carries_on = bool(re.match(rf"\s*{_DOTS}", text))
+    text = _PAUSE_RUN.sub(_one_pause, text)
     words = [list(_split(token)) for token in text.split()]
     words = _drop_fillers(words)
     words = _drop_repeats(words)
     _join_pauses(words, names)
-    _capitalise_sentences(words)
+    _capitalise_sentences(words, first=not carries_on)
     text = " ".join(f"{word}{trail}" for word, trail in words if word or trail)
     return text.strip(" ,;:")

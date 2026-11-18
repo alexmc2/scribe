@@ -151,6 +151,32 @@ class TidyTest(unittest.TestCase):
         segmenter = Segmenter(lambda *a, **k: [Segment(0, 1, "Um...")], detect, SegmenterOptions(), tidy=True)
         self.assertEqual(run(segmenter, np.concatenate([tone(1.0), silence(1.0)])), [])
 
+    def test_a_phrase_starting_with_a_pause_carries_on_the_last_one(self):
+        texts = iter(["You can use the keyboard or...", "...by turning it with a mouse.", "...and that's all."])
+
+        def model(audio, prompt="", final=True, timestamps=False):
+            return [Segment(0, 1, next(texts) if final else "")]
+
+        segmenter = Segmenter(model, detect, SegmenterOptions(), tidy=True)
+        commits = run(segmenter, np.concatenate([tone(1.0), silence(1.0)] * 3))
+        self.assertEqual(
+            [c.text for c in commits],
+            ["You can use the keyboard or", "by turning it with a mouse.", "And that's all."],
+        )
+
+    def test_pauses_stay_out_of_the_prompt_even_when_tidying_is_off(self):
+        prompts = []
+
+        def model(audio, prompt="", final=True, timestamps=False):
+            prompts.append(prompt)
+            return [Segment(0, 1, "...um... ...which is... ...really good.")]
+
+        segmenter = Segmenter(model, detect, SegmenterOptions(), tidy=False)
+        commits = run(segmenter, np.concatenate([tone(1.0), silence(1.0)] * 2))
+        self.assertEqual(commits[0].text, "...um... ...which is... ...really good.")
+        self.assertNotIn("...", prompts[-1])
+        self.assertIn("Which is really good.", prompts[-1])
+
 
 if __name__ == "__main__":
     unittest.main()

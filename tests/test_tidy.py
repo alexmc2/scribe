@@ -33,12 +33,28 @@ class TidySpeechTest(unittest.TestCase):
         self.assertEqual(tidy_speech("The... Problem is simple."), "The problem is simple.")
         self.assertEqual(tidy_speech("Not just... A day."), "Not just a day.")
 
-    def test_names_acronyms_and_new_thoughts_keep_their_pause(self):
-        self.assertEqual(tidy_speech("I spoke to... Veronica."), "I spoke to... Veronica.")
-        self.assertEqual(tidy_speech("Ask the... OKR owners."), "Ask the... OKR owners.")
-        self.assertEqual(tidy_speech("I think... I don't know."), "I think... I don't know.")
+    def test_names_and_acronyms_keep_their_capitals(self):
+        self.assertEqual(tidy_speech("I spoke to... Veronica."), "I spoke to Veronica.")
+        self.assertEqual(tidy_speech("Ask the... OKR owners."), "Ask the OKR owners.")
         names = names_in("Priya, Okonkwo, Kubernetes")
-        self.assertEqual(tidy_speech("Deploy the... Kubernetes cluster.", names), "Deploy the... Kubernetes cluster.")
+        self.assertEqual(tidy_speech("Deploy the... Kubernetes cluster.", names), "Deploy the Kubernetes cluster.")
+
+    def test_a_pause_before_i_starts_a_sentence_unless_the_last_one_carries_on(self):
+        self.assertEqual(tidy_speech("It follows your finger... I'll show you."), "It follows your finger. I'll show you.")
+        self.assertEqual(tidy_speech("So this is an app and... ...I'll show you."), "So this is an app and I'll show you.")
+
+    def test_pauses_written_on_both_sides_of_a_gap_all_go(self):
+        self.assertEqual(
+            tidy_speech("I found another... ...application that uses a touchpad... ...to move the cube... ...which is... ...really effective."),
+            "I found another application that uses a touchpad to move the cube which is really effective.",
+        )
+        self.assertEqual(
+            tidy_speech("...it... ...does... ...um... ...slices… …and... ...middle moves... ...um... ...and it's easy. And..."),
+            "it does slices and middle moves and it's easy. And",
+        )
+        self.assertEqual(tidy_speech("I'll send them... ...anyway. ...at the moment... ...on..."), "I'll send them anyway. At the moment on")
+        self.assertEqual(tidy_speech("...and... ...and you can."), "and you can.")
+        self.assertEqual(tidy_speech("... ..."), "")
 
 
 if __name__ == "__main__":

@@ -75,8 +75,9 @@ class Segmenter:
         # One label per input, used to say who spoke when there are several inputs.
         self.speakers = speakers
         self.vocabulary = vocabulary
-        # Leave out ums, stutters and needless pauses (see tidy.py). This also
-        # keeps them out of the context Whisper is shown, so it writes fewer.
+        # Leave out ums, stutters and "..." pauses (see tidy.py). The context
+        # Whisper is shown is tidied either way: it copies the style of its
+        # context, so pauses left in there come back many times over.
         self.tidy = tidy
         self.audio = np.zeros(0, dtype=np.float32)
         self.energy = np.zeros((0, len(speakers or [None])), dtype=np.float32)
@@ -176,13 +177,22 @@ class Segmenter:
         return _floor_frame((speech[i][1] + speech[i + 1][0]) // 2)
 
     def _tidied(self, text: str) -> str:
-        return tidy_speech(text, names_in(self.vocabulary)) if self.tidy else text
+        return self._clean(text) if self.tidy else text
+
+    def _clean(self, text: str) -> str:
+        text = tidy_speech(text, names_in(self.vocabulary))
+        # A phrase that began with a pause carries on the last one, unless
+        # that had finished its sentence.
+        if text[:1].islower() and (not self.context or self.context.endswith((".", "?", "!"))):
+            text = text[0].upper() + text[1:]
+        return text
 
     def _make_commit(self, text: str, start: int, end: int) -> Commit | None:
-        text = self._tidied(text)
+        clean = self._clean(text)
+        text = clean if self.tidy else text
         if not text:
             return None
-        self.context = f"{self.context} {text}"[-400:]
+        self.context = f"{self.context} {clean}".strip()[-400:]
         return Commit(
             start=(self.offset + start) / SAMPLE_RATE,
             end=(self.offset + end) / SAMPLE_RATE,
